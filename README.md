@@ -19,3 +19,5 @@ to generate requirements.txt
 ```cli
 pip freeze > requirements.txt
 ```
+
+## メモ
