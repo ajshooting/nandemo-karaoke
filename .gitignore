@@ -1,8 +1,13 @@
+# venv
 karaoke/
 
 .DS_Store
 
 __pycache__/
+pretrained_models/*
 
 tests/*.mp3
 tests/*.wav
+tests/output/*
+
+
