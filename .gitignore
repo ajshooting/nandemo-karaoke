@@ -1,3 +1,8 @@
+karaoke/
+
 .DS_Store
 
 __pycache__/
+
+tests/*.mp3
+tests/*.wav
