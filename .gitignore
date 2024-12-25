@@ -10,4 +10,4 @@ tests/*.mp3
 tests/*.wav
 tests/output/*
 
-
+data/output/*
