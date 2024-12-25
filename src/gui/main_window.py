@@ -97,6 +97,7 @@ class MainWindow(QMainWindow):
         )  # 分離後の曲のパスを格納する辞書 (例: {'vocals': '...', 'accompaniment': '...' })
         self.lyrics = []  # 歌詞リスト
         self.pitch_data = []  # 音程データ
+        self.accompaniment_path = None # 分離後の伴奏ファイルのパスを保存する変数
 
     def dragEnterEvent(self, event: QDragEnterEvent):
         if event.mimeData().hasUrls():
@@ -140,21 +141,9 @@ class MainWindow(QMainWindow):
         self.separated_song_paths = separated_paths
         QMessageBox.information(self, "完了", "音源分離が完了しました。")
 
-        # 分離が完了したら、例えばボーカルのみを再生できるようにする
-        if "vocals" in self.separated_song_paths:
-            self.play_separated_button = QPushButton("ボーカル再生", self)
-            self.play_separated_button.clicked.connect(self.on_play_vocals_clicked)
+        # 分離が完了したら、伴奏ファイルのパスを保存
+        self.accompaniment_path = self.separated_song_paths.get("accompaniment")
 
-            # 正しい objectName を使用して QHBoxLayout を取得
-            button_layout = self.findChild(QHBoxLayout, "horizontalLayout")
-            if button_layout:
-                button_layout.addWidget(self.play_separated_button)
-            else:
-                print(
-                    "Error: QHBoxLayout with objectName 'horizontalLayout' not found."
-                )
-        # TODO: ここマジで意味わからん、なんでここでボタン作るの？？？？？
-        # TODO: そんなことする必要なくないか？？？？？
 
     def on_separation_error(self, error_message):
         self.progress_dialog.close()
@@ -164,7 +153,11 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot()
     def on_play_clicked(self):
-        if self.current_song_path:  # 分離前のオリジナル音源を再生
+        if self.accompaniment_path:
+            print(f"再生ボタンがクリックされました。再生ファイル: {self.accompaniment_path}")
+            self.audio_player.play(self.accompaniment_path)
+            self.timer.start()
+        elif self.current_song_path:  # 分離前のオリジナル音源を再生
             print(
                 f"再生ボタンがクリックされました。再生ファイル: {self.current_song_path}"
             )
@@ -175,20 +168,6 @@ class MainWindow(QMainWindow):
                 self,
                 "警告",
                 "音源ファイルが選択されていません。先に音源ファイルをドロップまたは選択してください。",
-            )
-
-    @pyqtSlot()
-    def on_play_vocals_clicked(self):
-        if "vocals" in self.separated_song_paths:
-            vocals_path = self.separated_song_paths["vocals"]
-            print(
-                f"ボーカル再生ボタンがクリックされました。再生ファイル: {vocals_path}"
-            )
-            self.audio_player.play(vocals_path)
-            self.timer.start()
-        else:
-            QMessageBox.warning(
-                self, "警告", "分離されたボーカル音源が見つかりません。"
             )
 
     @pyqtSlot()
