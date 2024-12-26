@@ -8,6 +8,7 @@ pretrained_models/*
 
 tests/*.mp3
 tests/*.wav
+tests/whisper-result.json
 tests/output/*
 
 data/output/*
