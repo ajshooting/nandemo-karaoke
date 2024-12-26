@@ -23,7 +23,29 @@ from src.audio.recorder import Recorder
 from src.audio.separator import Separator
 from src.pitch.extractor import PitchExtractor
 from src.lyrics.synchronizer import Synchronizer
+from src.lyrics.recognizer import Recognizer  # Recognizerのインポート
 
+
+class RecognitionThread(QThread):
+    finished_signal = pyqtSignal(list)
+    error_signal = pyqtSignal(str)
+    progress_signal = pyqtSignal(str)
+
+    def __init__(self, audio_path, parent=None):
+        super().__init__(parent)
+        self.audio_path = audio_path
+        self.recognizer = Recognizer()
+
+    def run(self):
+        self.progress_signal.emit("音声認識を実行中...")
+        try:
+            lyrics_data = self.recognizer.recognize_lyrics(self.audio_path)
+            if lyrics_data:
+                self.finished_signal.emit(lyrics_data)
+            else:
+                self.error_signal.emit("音声認識に失敗しました。")
+        except Exception as e:
+            self.error_signal.emit(f"音声認識エラー: {e}")
 
 
 class SeparationThread(QThread):
@@ -79,9 +101,10 @@ class MainWindow(QMainWindow):
         self.drop_area.dragEnterEvent = self.dragEnterEvent
         self.drop_area.dropEvent = self.dropEvent
 
-        # タイマー設定 (例: 音程バーの更新)
+        # タイマー設定 (例: 音程バーと歌詞の更新)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_pitch_bar)
+        self.timer.timeout.connect(self.update_lyrics_display)  # 歌詞更新処理を追加
         self.timer.setInterval(100)  # 例: 100msごとに更新
 
         # 他の処理系モジュールの初期化 (必要に応じて)
@@ -89,6 +112,8 @@ class MainWindow(QMainWindow):
         self.audio_recorder = Recorder()
         self.pitch_extractor = PitchExtractor()
         self.lyric_synchronizer = Synchronizer()
+        self.recognizer = Recognizer()  # Recognizerのインスタンス化
+        self.recognition_thread = None
 
         # 初期設定
         self.current_song_path = ""  # 現在の曲のパス
@@ -97,7 +122,9 @@ class MainWindow(QMainWindow):
         )  # 分離後の曲のパスを格納する辞書 (例: {'vocals': '...', 'accompaniment': '...' })
         self.lyrics = []  # 歌詞リスト
         self.pitch_data = []  # 音程データ
-        self.accompaniment_path = None # 分離後の伴奏ファイルのパスを保存する変数
+        self.accompaniment_path = None  # 分離後の伴奏ファイルのパスを保存する変数
+        self.recognized_lyrics = []  # 音声認識された歌詞を保存するリスト
+        self.current_lyric_index = 0  # 現在表示中の歌詞のインデックス
 
     def dragEnterEvent(self, event: QDragEnterEvent):
         if event.mimeData().hasUrls():
@@ -124,9 +151,37 @@ class MainWindow(QMainWindow):
     def process_audio_file(self, file_path):
         self.current_song_path = file_path
         self.start_separation(file_path)
+        self.start_recognition(file_path)  # 音声認識の開始
+
+    def start_recognition(self, audio_path):
+        self.recognition_progress_dialog = QProgressDialog(
+            "音声認識を実行中...", None, 0, 0, self
+        )
+        self.recognition_progress_dialog.setCancelButtonText(None)
+        self.recognition_progress_dialog.setModal(True)
+        self.recognition_progress_dialog.show()
+
+        self.recognition_thread = RecognitionThread(audio_path, self)
+        self.recognition_thread.finished_signal.connect(self.on_recognition_finished)
+        self.recognition_thread.error_signal.connect(self.on_recognition_error)
+        self.recognition_thread.progress_signal.connect(
+            self.recognition_progress_dialog.setLabelText
+        )
+        self.recognition_thread.start()
+
+    def on_recognition_finished(self, lyrics_data):
+        self.recognition_progress_dialog.close()
+        self.recognized_lyrics = lyrics_data
+        QMessageBox.information(self, "完了", "音声認識が完了しました。")
+
+    def on_recognition_error(self, error_message):
+        self.recognition_progress_dialog.close()
+        QMessageBox.critical(
+            self, "エラー", f"音声認識中にエラーが発生しました: {error_message}"
+        )
 
     def start_separation(self, input_path):
-        self.progress_dialog = QProgressDialog("分離処理中...", None, 0, 0, self)
+        self.progress_dialog = QProgressDialog("音源分離処理中...", None, 0, 0, self)
         self.progress_dialog.setCancelButtonText(None)
         self.progress_dialog.setModal(True)
         self.progress_dialog.show()
@@ -144,7 +199,6 @@ class MainWindow(QMainWindow):
         # 分離が完了したら、伴奏ファイルのパスを保存
         self.accompaniment_path = self.separated_song_paths.get("accompaniment")
 
-
     def on_separation_error(self, error_message):
         self.progress_dialog.close()
         QMessageBox.critical(
@@ -153,28 +207,41 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot()
     def on_play_clicked(self):
+        if not self.current_song_path:
+            QMessageBox.warning(self, "警告", "音源ファイルが選択されていません。")
+            return
+
+        if not self.recognized_lyrics:
+            QMessageBox.warning(self, "警告", "音声認識が完了していません。")
+            return
+
         if self.accompaniment_path:
-            print(f"再生ボタンがクリックされました。再生ファイル: {self.accompaniment_path}")
+            print(
+                f"再生ボタンがクリックされました。再生ファイル: {self.accompaniment_path}"
+            )
             self.audio_player.play(self.accompaniment_path)
-            self.timer.start()
         elif self.current_song_path:  # 分離前のオリジナル音源を再生
             print(
                 f"再生ボタンがクリックされました。再生ファイル: {self.current_song_path}"
             )
             self.audio_player.play(self.current_song_path)
-            self.timer.start()
         else:
             QMessageBox.warning(
                 self,
                 "警告",
                 "音源ファイルが選択されていません。先に音源ファイルをドロップまたは選択してください。",
             )
+            return
+
+        self.timer.start()
+        self.current_lyric_index = 0  # 再生開始時にインデックスをリセット
 
     @pyqtSlot()
     def on_stop_clicked(self):
         print("Stopボタンがクリックされました")
         self.audio_player.stop()
         self.timer.stop()
+        self.lyrics_label.setText("")  # 停止時に歌詞表示をクリア
 
     @pyqtSlot()
     def update_pitch_bar(self):
@@ -194,10 +261,33 @@ class MainWindow(QMainWindow):
     def set_pitch_data(self, pitch_data):
         self.pitch_data = pitch_data
 
-    def update_lyrics_display(self, current_time):
-        # 現在の再生時間に基づいて歌詞を更新する処理
-        # 例: self.lyric_synchronizer.get_current_lyric(current_time) を使用
-        pass
+    def update_lyrics_display(self):
+        if not self.audio_player.is_playing():
+            return
+
+        current_time = self.audio_player.get_current_time() / 1000  # ミリ秒から秒に変換
+
+        for i, lyric_info in enumerate(
+            self.recognized_lyrics[self.current_lyric_index :]
+        ):
+            if lyric_info["start"] <= current_time < lyric_info["end"]:
+                self.lyrics_label.setText(lyric_info["word"])
+                self.current_lyric_index += i
+                return
+            elif current_time >= lyric_info["end"]:
+                # 現在時刻が歌詞の終了時刻を超えている場合は次の歌詞へ
+                continue
+            else:
+                # まだ歌詞の開始時刻に達していない
+                break
+        else:
+            # 全ての歌詞を表示し終えた場合
+            if (
+                self.recognized_lyrics
+                and current_time >= self.recognized_lyrics[-1]["end"]
+            ):
+                self.lyrics_label.setText("")  # 最後の歌詞を表示し終えたらクリア
+                self.timer.stop()  # タイマー停止
 
     def update_score(self, score):
         self.score_label.setText(f"スコア: {score}")
