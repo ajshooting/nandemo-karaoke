@@ -10,6 +10,9 @@ class Player:
 
     def play(self, audio_path):
         try:
+            if self.play_obj and self.play_obj.is_playing():
+                self.play_obj.stop()
+
             self.wave_obj = sa.WaveObject.from_wave_file(audio_path)
             self.play_obj = self.wave_obj.play()
             self.start_time = time.time()  # 再生開始時間を記録

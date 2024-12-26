@@ -1,5 +1,6 @@
 import whisper
 
+
 class Recognizer:
     def __init__(self, model_size="base", language="ja"):
         self.model_size = model_size
@@ -9,17 +10,21 @@ class Recognizer:
     def recognize_lyrics(self, audio_path):
         try:
             # 音声認識の実行 (単語レベルのタイムスタンプを有効化)
-            result = self.model.transcribe(audio_path, word_timestamps=True, fp16=False, language=self.language)
+            result = self.model.transcribe(
+                audio_path, word_timestamps=True, fp16=False, language=self.language
+            )
 
             # 結果を整形して返す (例: 単語、開始時間、終了時間のリスト)
             formatted_result = []
             for segment in result["segments"]:
                 for word_info in segment["words"]:
-                    formatted_result.append({
-                        "word": word_info["word"],
-                        "start": word_info["start"],
-                        "end": word_info["end"]
-                    })
+                    formatted_result.append(
+                        {
+                            "word": word_info["word"].strip(),
+                            "start": word_info["start"],
+                            "end": word_info["end"],
+                        }
+                    )
 
             return formatted_result
 
@@ -29,6 +34,7 @@ class Recognizer:
         except Exception as e:
             print(f"エラーが発生しました: {e}")
             return None
+
 
 # if __name__ == '__main__':
 #     # サンプルの音声ファイルパス (適宜変更してください)

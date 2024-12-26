@@ -265,13 +265,19 @@ class MainWindow(QMainWindow):
         if not self.audio_player.is_playing():
             return
 
-        current_time = self.audio_player.get_current_time() / 1000  # ミリ秒から秒に変換
+        current_time = self.audio_player.get_current_time()  # 秒単位で取得
 
         for i, lyric_info in enumerate(
             self.recognized_lyrics[self.current_lyric_index :]
         ):
             if lyric_info["start"] <= current_time < lyric_info["end"]:
-                self.lyrics_label.setText(lyric_info["word"])
+                if (
+                    self.current_lyric_index + i < len(self.recognized_lyrics)
+                    and self.lyrics_label.text()
+                    != self.recognized_lyrics[self.current_lyric_index + i]["word"]
+                ):
+                    self.lyrics_label.setText(lyric_info["word"])
+
                 self.current_lyric_index += i
                 return
             elif current_time >= lyric_info["end"]:
