@@ -126,6 +126,14 @@ class MainWindow(QMainWindow):
         self.recognized_lyrics = []  # 音声認識された歌詞を保存するリスト
         self.current_lyric_index = 0  # 現在表示中の歌詞のインデックス
 
+        self.current_segment_index = 0  # 現在表示中のフレーズのインデックス
+        self.current_word_index = 0  # 現在色付け中の単語のインデックス
+
+        self.lyrics_label = self.findChild(QLabel, "lyricsLabel")
+        self.lyrics_label.setTextFormat(
+            Qt.TextFormat.RichText
+        )  # リッチテキストを有効にする
+
     def dragEnterEvent(self, event: QDragEnterEvent):
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
@@ -173,6 +181,8 @@ class MainWindow(QMainWindow):
         self.recognition_progress_dialog.close()
         self.recognized_lyrics = lyrics_data
         QMessageBox.information(self, "完了", "音声認識が完了しました。")
+        self.current_segment_index = 0  # 音声認識完了時にリセット
+        self.lyrics_label.setText("")
 
     def on_recognition_error(self, error_message):
         self.recognition_progress_dialog.close()
@@ -236,12 +246,18 @@ class MainWindow(QMainWindow):
         self.timer.start()
         self.current_lyric_index = 0  # 再生開始時にインデックスをリセット
 
+        self.current_word_index = 0
+        self.update_lyrics_display()  # 初期表示のため呼び出す
+
     @pyqtSlot()
     def on_stop_clicked(self):
         print("Stopボタンがクリックされました")
         self.audio_player.stop()
         self.timer.stop()
         self.lyrics_label.setText("")  # 停止時に歌詞表示をクリア
+
+        self.current_segment_index = 0  # 停止時にリセット
+        self.current_word_index = 0
 
     @pyqtSlot()
     def update_pitch_bar(self):
@@ -262,38 +278,56 @@ class MainWindow(QMainWindow):
         self.pitch_data = pitch_data
 
     def update_lyrics_display(self):
-        if not self.audio_player.is_playing():
+        if not self.audio_player.is_playing() or not self.recognized_lyrics:
             return
 
-        current_time = self.audio_player.get_current_time()  # 秒単位で取得
+        current_time = self.audio_player.get_current_time()
 
-        for i, lyric_info in enumerate(
-            self.recognized_lyrics[self.current_lyric_index :]
-        ):
-            if lyric_info["start"] <= current_time < lyric_info["end"]:
-                if (
-                    self.current_lyric_index + i < len(self.recognized_lyrics)
-                    and self.lyrics_label.text()
-                    != self.recognized_lyrics[self.current_lyric_index + i]["word"]
-                ):
-                    self.lyrics_label.setText(lyric_info["word"])
-
-                self.current_lyric_index += i
-                return
-            elif current_time >= lyric_info["end"]:
-                # 現在時刻が歌詞の終了時刻を超えている場合は次の歌詞へ
-                continue
+        if self.current_segment_index < len(self.recognized_lyrics):
+            segment = self.recognized_lyrics[self.current_segment_index]
+            if segment["start"] <= current_time < segment["end"]:
+                # 現在のフレーズを表示
+                self.display_karaoke_text(segment)
+            elif current_time >= segment["end"]:
+                # 現在のフレーズの終了時間を過ぎたら、次のフレーズへ
+                self.current_segment_index += 1
+                self.lyrics_label.setText("")  # 次のフレーズ表示前にクリア
+                # 次のフレーズが存在すれば、すぐに表示
+                if self.current_segment_index < len(self.recognized_lyrics):
+                    self.display_karaoke_text(
+                        self.recognized_lyrics[self.current_segment_index]
+                    )
             else:
-                # まだ歌詞の開始時刻に達していない
-                break
-        else:
-            # 全ての歌詞を表示し終えた場合
-            if (
-                self.recognized_lyrics
-                and current_time >= self.recognized_lyrics[-1]["end"]
-            ):
-                self.lyrics_label.setText("")  # 最後の歌詞を表示し終えたらクリア
-                self.timer.stop()  # タイマー停止
+                # まだフレーズの開始時間になっていない
+                pass
+        elif (
+            self.recognized_lyrics and current_time >= self.recognized_lyrics[-1]["end"]
+        ):
+            # 全てのフレーズを表示し終えた場合
+            self.lyrics_label.setText("")
+            self.timer.stop()
+
+    def display_karaoke_text(self, segment):
+        karaoke_text = ""
+        current_time = self.audio_player.get_current_time()
+
+        for word_info in segment["words"]:
+            if segment["start"] <= current_time < segment["end"]:
+                ratio = (
+                    (current_time - word_info["start"])
+                    / (word_info["end"] - word_info["start"])
+                    if (word_info["end"] - word_info["start"]) > 0
+                    else 0
+                )
+                highlight_length = int(len(word_info["word"]) * ratio)
+                highlighted_word = f"<span style='color: red;'>{word_info['word'][:highlight_length]}</span>{word_info['word'][highlight_length:]}"
+                karaoke_text += highlighted_word
+            elif current_time >= word_info["end"]:
+                karaoke_text += f"<span style='color: red;'>{word_info['word']}</span>"
+            else:
+                karaoke_text += word_info["word"]
+
+        self.lyrics_label.setText(karaoke_text)
 
     def update_score(self, score):
         self.score_label.setText(f"スコア: {score}")

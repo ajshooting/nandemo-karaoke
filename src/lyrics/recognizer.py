@@ -17,14 +17,21 @@ class Recognizer:
             # 結果を整形して返す (例: 単語、開始時間、終了時間のリスト)
             formatted_result = []
             for segment in result["segments"]:
-                for word_info in segment["words"]:
-                    formatted_result.append(
-                        {
-                            "word": word_info["word"].strip(),
-                            "start": word_info["start"],
-                            "end": word_info["end"],
-                        }
-                    )
+                formatted_result.append(
+                    {
+                        "text": segment["text"].strip(),
+                        "start": segment["start"],
+                        "end": segment["end"],
+                        "words": [
+                            {
+                                "word": word["word"].strip(),
+                                "start": word["start"],
+                                "end": word["end"],
+                            }
+                            for word in segment["words"]
+                        ],
+                    }
+                )
 
             return formatted_result
 
