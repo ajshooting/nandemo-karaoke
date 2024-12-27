@@ -1,6 +1,6 @@
 # nandemo-karaoke
 
-karaoke
+なんでもカラオケ！
 
 do this to execute this program
 
