@@ -321,11 +321,13 @@ class MainWindow(QMainWindow):
                 )
                 highlight_length = int(len(word_info["word"]) * ratio)
                 highlighted_word = f"<span style='color: red;'>{word_info['word'][:highlight_length]}</span>{word_info['word'][highlight_length:]}"
-                karaoke_text += highlighted_word
+                karaoke_text += " " + highlighted_word
             elif current_time >= word_info["end"]:
-                karaoke_text += f"<span style='color: red;'>{word_info['word']}</span>"
+                karaoke_text += (
+                    " " + f"<span style='color: red;'>{word_info['word']}</span>"
+                )
             else:
-                karaoke_text += word_info["word"]
+                karaoke_text += " " + word_info["word"]
 
         self.lyrics_label.setText(karaoke_text)
 
