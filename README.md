@@ -26,3 +26,4 @@ pip freeze > requirements.txt
 - メロディ検出
 - 歌詞認識/検索/同期
 - ピッチ検出
+- exe/app化できるの？ありえないくらい重くなりそう
