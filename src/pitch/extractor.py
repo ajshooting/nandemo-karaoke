@@ -7,7 +7,7 @@ import json
 class PitchExtractor:
     def __init__(self, cache_dir="data/output"):
         self.cache_dir = cache_dir
-        self.volume_threshold = 0.3  # 音量の閾値を設定
+        self.volume_threshold = 0.02  # 音量の閾値を設定
 
     def _get_cache_file_path(self, audio_path):
         parent_dir = os.path.dirname(audio_path)
