@@ -20,6 +20,17 @@ to generate requirements.txt
 pip freeze > requirements.txt
 ```
 
+なにこれ興味ある
+
+```cli
+# ターミナルでプロファイリングを実行
+python -m cProfile -o profile.out main_window.py 
+# (main_window.py はあなたのアプリケーションのメインファイル)
+
+# snakeviz を使ってプロファイル結果を可視化
+snakeviz profile.out
+```
+
 ## メモ
 
 - 楽曲分離
