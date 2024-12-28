@@ -7,11 +7,11 @@ import json
 class PitchExtractor:
     def __init__(self, cache_dir="data/output"):
         self.cache_dir = cache_dir
-        self.volume_threshold = 0.02  # 音量の閾値を設定
+        self.volume_threshold = 0.3  # 音量の閾値を設定
 
     def _get_cache_file_path(self, audio_path):
-        filename_without_ext = os.path.splitext(os.path.basename(audio_path))[0]
-        return os.path.join(f"{self.cache_dir}/{filename_without_ext}", "pitch.json")
+        parent_dir = os.path.dirname(audio_path)
+        return os.path.join(parent_dir, "pitch.json")
 
     def extract_pitch(
         self,
@@ -19,7 +19,7 @@ class PitchExtractor:
         sr=None,
         hop_length=2048,
         frame_length=2048,
-        fmin=150,
+        fmin=200,
         fmax=900,
     ):
         """

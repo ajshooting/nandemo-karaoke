@@ -141,6 +141,11 @@ class MainWindow(QMainWindow):
         self.lyrics_label = self.findChild(QLabel, "lyricsLabel")
         self.lyrics_label.setTextFormat(Qt.TextFormat.RichText)  # リッチテキストを有効
 
+        # 各種スレッドを保持する変数を初期化
+        self.separation_thread = None
+        self.recognition_thread = None
+        self.pitch_extraction_thread = None
+
     def dragEnterEvent(self, event: QDragEnterEvent):
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
@@ -166,8 +171,8 @@ class MainWindow(QMainWindow):
     def process_audio_file(self, file_path):
         self.current_song_path = file_path
         self.start_separation(file_path)
-        self.start_recognition(file_path)
-        self.start_pitch_extraction(file_path)  # ピッチ解析の開始
+        # self.start_recognition(file_path)
+        # self.start_pitch_extraction(file_path)  # ピッチ解析の開始
 
     # ! ピッチ解析用の関数を追加
     def start_pitch_extraction(self, audio_path):
@@ -237,6 +242,25 @@ class MainWindow(QMainWindow):
         self.separated_song_paths = separated_paths
         QMessageBox.information(self, "完了", "音源分離が完了しました。")
 
+        # 分離が完了したら、伴奏ファイルのパスを保存
+        self.accompaniment_path = self.separated_song_paths.get("accompaniment")
+
+        # 音声認識を開始 (ボーカルに対して実行)
+        vocals_path = self.separated_song_paths.get("vocals")
+        if vocals_path:
+            self.start_recognition(vocals_path)
+        else:
+            QMessageBox.warning(
+                self, "警告", "ボーカルファイルが見つかりませんでした。"
+            )
+
+        # ピッチ解析を開始 (ボーカルに対して実行)
+        if vocals_path:
+            self.start_pitch_extraction(vocals_path)
+        else:
+            QMessageBox.warning(
+                self, "警告", "ボーカルファイルが見つかりませんでした。"
+            )
         # 分離が完了したら、伴奏ファイルのパスを保存
         self.accompaniment_path = self.separated_song_paths.get("accompaniment")
 
