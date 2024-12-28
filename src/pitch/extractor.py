@@ -19,8 +19,8 @@ class PitchExtractor:
         sr=None,
         hop_length=2048,
         frame_length=2048,
-        fmin=200,
-        fmax=900,
+        fmin=100,
+        fmax=1000,
     ):
         """
         音声ファイルから音程を抽出します。

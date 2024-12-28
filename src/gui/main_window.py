@@ -240,7 +240,6 @@ class MainWindow(QMainWindow):
     def on_separation_finished(self, separated_paths):
         self.progress_dialog.close()
         self.separated_song_paths = separated_paths
-        QMessageBox.information(self, "完了", "音源分離が完了しました。")
 
         # 分離が完了したら、伴奏ファイルのパスを保存
         self.accompaniment_path = self.separated_song_paths.get("accompaniment")
@@ -263,6 +262,9 @@ class MainWindow(QMainWindow):
             )
         # 分離が完了したら、伴奏ファイルのパスを保存
         self.accompaniment_path = self.separated_song_paths.get("accompaniment")
+        
+        # ここにおけばOK押す前に次の処理が開始されると予想
+        QMessageBox.information(self, "完了", "音源分離が完了しました。")
 
     def on_separation_error(self, error_message):
         self.progress_dialog.close()
