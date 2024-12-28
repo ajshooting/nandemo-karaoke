@@ -36,21 +36,3 @@ class PitchExtractor:
         except Exception as e:
             print(f"エラーが発生しました: {e}")
             return []
-
-if __name__ == '__main__':
-    # サンプルの音声ファイルパス (適宜変更してください)
-    audio_file = 'sample.wav'
-
-    # PitchExtractorのインスタンスを作成
-    extractor = PitchExtractor()
-
-    # 音程を抽出
-    pitch_data = extractor.extract_pitch(audio_file)
-
-    # 抽出された音程データを表示 (最初の10個)
-    if pitch_data:
-        print("抽出された音程データ (時間[秒], 音程[Hz]):")
-        for time, pitch in pitch_data[:10]:
-            print(f"{time:.3f}, {pitch:.2f}")
-    else:
-        print("音程データを抽出できませんでした。")
