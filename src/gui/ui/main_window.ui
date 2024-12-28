@@ -81,7 +81,7 @@
     <customwidget>
       <class>PitchBar</class>
       <extends>QWidget</extends>
-      <header>src/gui/widgets/pitch_bar.h</header>
+      <header>src/gui/widgets/pitch_bar</header>
       <container>1</container>
     </customwidget>
   </customwidgets>
