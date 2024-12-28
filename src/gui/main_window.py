@@ -26,6 +26,23 @@ from src.lyrics.synchronizer import Synchronizer
 from src.lyrics.recognizer import Recognizer  # Recognizerのインポート
 
 
+class PitchExtractionThread(QThread):
+    finished_signal = pyqtSignal(list)
+    error_signal = pyqtSignal(str)
+
+    def __init__(self, audio_path):
+        super().__init__()
+        self.audio_path = audio_path
+        self.pitch_extractor = PitchExtractor()
+
+    def run(self):
+        try:
+            pitch_data = self.pitch_extractor.extract_pitch(self.audio_path)
+            self.finished_signal.emit(pitch_data)
+        except Exception as e:
+            self.error_signal.emit(str(e))
+
+
 class RecognitionThread(QThread):
     finished_signal = pyqtSignal(list)
     error_signal = pyqtSignal(str)
@@ -149,7 +166,31 @@ class MainWindow(QMainWindow):
     def process_audio_file(self, file_path):
         self.current_song_path = file_path
         self.start_separation(file_path)
-        self.start_recognition(file_path)  # 音声認識の開始
+        self.start_recognition(file_path)
+        self.start_pitch_extraction(file_path)  # ピッチ解析の開始
+
+    # ! ピッチ解析用の関数を追加
+    def start_pitch_extraction(self, audio_path):
+        self.pitch_extraction_thread = PitchExtractionThread(audio_path)
+        self.pitch_extraction_thread.finished_signal.connect(
+            self.on_pitch_extraction_finished
+        )
+        self.pitch_extraction_thread.error_signal.connect(
+            self.on_pitch_extraction_error
+        )
+        self.pitch_extraction_thread.start()
+
+    def on_pitch_extraction_finished(self, pitch_data):
+        self.pitch_data = pitch_data
+        QMessageBox.information(self, "完了", "ピッチ解析が完了しました。")
+        # ピッチ解析が完了したら、ピッチバーウィジェットにデータを設定
+        self.pitch_bar_widget.set_pitch_data(pitch_data)
+        self.pitch_bar_widget.reset()
+
+    def on_pitch_extraction_error(self, error_message):
+        QMessageBox.critical(
+            self, "エラー", f"ピッチ解析中にエラーが発生しました: {error_message}"
+        )
 
     def start_recognition(self, audio_path):
         self.recognition_progress_dialog = QProgressDialog(
@@ -215,6 +256,10 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "警告", "音声認識が完了していません。")
             return
 
+        if not self.pitch_data:
+            QMessageBox.warning(self, "警告", "ピッチ解析が完了していません。")
+            return
+
         if self.accompaniment_path:
             print(f"再生: {self.accompaniment_path}")
             self.audio_player.play(self.accompaniment_path)
@@ -231,6 +276,7 @@ class MainWindow(QMainWindow):
             return
 
         self.lyrics_label.setText("")
+        self.pitch_bar_widget.reset()
 
         self.timer.start()
         self.current_lyric_index = 0  # 再生開始時にインデックスをリセット
@@ -244,6 +290,7 @@ class MainWindow(QMainWindow):
         self.audio_player.stop()
         self.timer.stop()
         self.lyrics_label.setText("")  # 停止時に歌詞表示をクリア
+        self.pitch_bar_widget.reset()
 
         self.current_segment_index = 0  # 停止時にリセット
         self.current_word_index = 0
@@ -251,11 +298,9 @@ class MainWindow(QMainWindow):
     @pyqtSlot()
     def update_pitch_bar(self):
         # 音程バーの更新処理
-        # 例: 現在の再生時間に基づいて音程データを取得し、PitchBarに渡す
-        #     current_time = self.audio_player.get_current_time()
-        #     pitch_value = self.get_pitch_at_time(current_time)
-        #     self.pitch_bar_widget.set_pitch(pitch_value)
-        pass
+        if self.audio_player.is_playing():
+            current_time = self.audio_player.get_current_time()
+            self.pitch_bar_widget.update_position(current_time)
 
     # ! これ使われてなくない？
     def set_lyrics(self, lyrics):
