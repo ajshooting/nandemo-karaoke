@@ -4,9 +4,7 @@ import json
 
 
 class Recognizer:
-    def __init__(
-        self, model_size="base", language="ja", cache_dir="data/output"
-    ):
+    def __init__(self, model_size="base", language="ja", cache_dir="data/output"):
         self.model_size = model_size
         self.language = language
         self.model = whisper.load_model(self.model_size)
@@ -14,8 +12,8 @@ class Recognizer:
         # os.makedirs(self.cache_dir, exist_ok=True)
 
     def _get_cache_file_path(self, audio_path):
-        filename_without_ext = os.path.splitext(os.path.basename(audio_path))[0]
-        return os.path.join(f"{self.cache_dir}/{filename_without_ext}", "recognized.json")
+        parent_dir = os.path.dirname(audio_path)
+        return os.path.join(parent_dir, "recognized.json")
 
     def recognize_lyrics(self, audio_path):
         cache_file_path = self._get_cache_file_path(audio_path)
