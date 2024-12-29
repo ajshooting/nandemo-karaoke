@@ -18,15 +18,15 @@ class Recognizer:
     def recognize_lyrics(self, audio_path):
         cache_file_path = self._get_cache_file_path(audio_path)
 
-        # キャッシュファイルが存在するか確認
+        # キャッシュが存在するか確認
         if os.path.exists(cache_file_path):
-            print(f"認識結果のキャッシュが見つかりました: {cache_file_path}")
+            print(f"音声認識結果のキャッシュが見つかりました: {cache_file_path}")
             try:
                 with open(cache_file_path, "r", encoding="utf-8") as f:
                     return json.load(f)
             except json.JSONDecodeError:
                 print(
-                    f"キャッシュファイルの読み込みに失敗しました。再実行します: {cache_file_path}"
+                    f"音声認識結果キャッシュの読み込みに失敗しました。再実行します: {cache_file_path}"
                 )
                 # キャッシュが壊れている場合は再実行
                 pass
@@ -38,7 +38,7 @@ class Recognizer:
                 audio_path, word_timestamps=True, fp16=False, language=self.language
             )
 
-            # 結果を整形して返す (例: 単語、開始時間、終了時間のリスト)
+            # 結果を整形して返す (単語、開始時間、終了時間)
             formatted_result = []
             for segment in result["segments"]:
                 formatted_result.append(
@@ -61,15 +61,15 @@ class Recognizer:
             try:
                 with open(cache_file_path, "w", encoding="utf-8") as f:
                     json.dump(formatted_result, f, ensure_ascii=False, indent=4)
-                print(f"認識結果をキャッシュに保存しました: {cache_file_path}")
+                print(f"音声認識結果を保存しました: {cache_file_path}")
             except Exception as e:
-                print(f"キャッシュファイルへの保存に失敗しました: {e}")
+                print(f"音声認識結果キャッシュの保存に失敗しました: {e}")
 
             return formatted_result
 
         except FileNotFoundError:
-            print(f"エラー：音声ファイルが見つかりません: {audio_path}")
+            print(f"音声ファイルが見つかりません: {audio_path}")
             return None
         except Exception as e:
-            print(f"エラーが発生しました: {e}")
+            print(f"音声認識エラー: {e}")
             return None

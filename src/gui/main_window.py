@@ -289,10 +289,6 @@ class MainWindow(QMainWindow):
         if self.accompaniment_path:
             print(f"再生: {self.accompaniment_path}")
             self.audio_player.play(self.accompaniment_path)
-        elif self.current_song_path:
-            # 分離前のオリジナル音源を再生
-            print(f"再生: {self.current_song_path}")
-            self.audio_player.play(self.current_song_path)
         else:
             QMessageBox.warning(
                 self,
@@ -312,7 +308,7 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot()
     def on_stop_clicked(self):
-        print("Stopボタンがクリックされました")
+        print("再生停止")
         self.audio_player.stop()
         self.timer.stop()
         self.lyrics_label.setText("")  # 停止時に歌詞表示をクリア

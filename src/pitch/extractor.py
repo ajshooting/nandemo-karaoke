@@ -7,7 +7,7 @@ import json
 class PitchExtractor:
     def __init__(self, cache_dir="data/output"):
         self.cache_dir = cache_dir
-        self.volume_threshold = 0.02  # 音量の閾値を設定
+        self.volume_threshold = 0.02  # 音量の閾値
 
     def _get_cache_file_path(self, audio_path):
         parent_dir = os.path.dirname(audio_path)
@@ -16,29 +16,18 @@ class PitchExtractor:
     def extract_pitch(
         self,
         audio_path,
-        sr=None,
-        hop_length=2048,
-        frame_length=2048,
-        fmin=100,
-        fmax=1000,
+        sr=None,  # サンプリングレート(Noneだとlibrosaが自動で判断)
+        hop_length=2048,  # 分析フレーム間のホップ長(大きいと時間分解能が低くなる)
+        frame_length=2048,  # フレーム長(大きいと周波数分解能が低くなる)
+        fmin=100,  # 検出する最小周波数
+        fmax=1000,  # 検出する最大周波数
     ):
-        """
-        音声ファイルから音程を抽出します。
 
-        Args:
-            audio_path (str): 音声ファイルのパス。
-            sr (int, optional): サンプリングレート。Noneの場合、librosaが自動で判断します。
-            hop_length (int, optional): 分析フレーム間のホップ長。
-            frame_length (int, optional): フレーム長
-            fmin (int, optional): 検出する最小周波数
-            fmax (int, optional): 検出する最大周波数
+        # 出力は {start: 開始時間, end: 終了時間, pitch: MIDIノート番号} の辞書？
 
-        Returns:
-            list: ピッチデータのリスト。各要素は {"start": 開始時間, "end": 終了時間, "pitch": MIDIノート番号} の辞書。
-        """
         cache_file_path = self._get_cache_file_path(audio_path)
 
-        # キャッシュファイルが存在するか確認
+        # キャッシュが存在するか確認
         if os.path.exists(cache_file_path):
             print(f"ピッチ解析結果のキャッシュが見つかりました: {cache_file_path}")
             try:
@@ -46,7 +35,7 @@ class PitchExtractor:
                     return json.load(f)
             except json.JSONDecodeError:
                 print(
-                    f"キャッシュファイルの読み込みに失敗しました。再実行します: {cache_file_path}"
+                    f"ピッチ解析結果キャッシュの読み込みに失敗しました。再実行します: {cache_file_path}"
                 )
                 # キャッシュが壊れている場合は再実行
                 pass
@@ -142,10 +131,10 @@ class PitchExtractor:
                     json.dump(filtered_pitch_data2, f, ensure_ascii=False, indent=4)
                 print(f"ピッチ解析結果をキャッシュに保存しました: {cache_file_path}")
             except Exception as e:
-                print(f"キャッシュファイルへの保存に失敗しました: {e}")
+                print(f"ピッチ解析結果キャッシュの保存に失敗しました: {e}")
 
             return filtered_pitch_data2
 
         except Exception as e:
-            print(f"エラーが発生しました: {e}")
+            print(f"ピッチ解析エラー: {e}")
             return []
