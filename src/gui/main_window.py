@@ -171,10 +171,9 @@ class MainWindow(QMainWindow):
     def process_audio_file(self, file_path):
         self.current_song_path = file_path
         self.start_separation(file_path)
-        # self.start_recognition(file_path)
-        # self.start_pitch_extraction(file_path)  # ピッチ解析の開始
+        self.start_recognition(file_path)
+        # self.start_pitch_extraction(file_path)
 
-    # ! ピッチ解析用の関数を追加
     def start_pitch_extraction(self, audio_path):
         self.pitch_extraction_thread = PitchExtractionThread(audio_path)
         self.pitch_extraction_thread.finished_signal.connect(
@@ -243,15 +242,15 @@ class MainWindow(QMainWindow):
 
         # 分離が完了したら、伴奏ファイルのパスを保存
         self.accompaniment_path = self.separated_song_paths.get("accompaniment")
-
-        # 音声認識を開始 (ボーカルに対して実行)
         vocals_path = self.separated_song_paths.get("vocals")
-        if vocals_path:
-            self.start_recognition(vocals_path)
-        else:
-            QMessageBox.warning(
-                self, "警告", "ボーカルファイルが見つかりませんでした。"
-            )
+
+        # vocalに音声認識をする予定だったが、音源そのままを認識させた方が精度が高かった..
+        # if vocals_path:
+        #     self.start_recognition(vocals_path)
+        # else:
+        #     QMessageBox.warning(
+        #         self, "警告", "ボーカルファイルが見つかりませんでした。"
+        #     )
 
         # ピッチ解析を開始 (ボーカルに対して実行)
         if vocals_path:
@@ -260,9 +259,7 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(
                 self, "警告", "ボーカルファイルが見つかりませんでした。"
             )
-        # 分離が完了したら、伴奏ファイルのパスを保存
-        self.accompaniment_path = self.separated_song_paths.get("accompaniment")
-        
+
         # ここにおけばOK押す前に次の処理が開始されると予想
         QMessageBox.information(self, "完了", "音源分離が完了しました。")
 
