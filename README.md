@@ -15,10 +15,9 @@ python3 -m src.main
 pip freeze > requirements.txt
 ```
 
-## メモ
+## ToDo
 
-- 楽曲分離
-- メロディ検出
-- 歌詞認識/検索/同期
-- ピッチ検出
-- exe/app化できるの？ありえないくらい重くなりそう
+- [x] 楽曲分離 -> spleeter
+- [x] メロディ/ピッチ検出 -> YIN
+- [ ] 歌詞認識/検索/同期 -> whisper/検索は権利的に△?
+- [ ] exe/app化 -> pyinstallerがうまくいかない
