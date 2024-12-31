@@ -2,33 +2,16 @@
 
 なんでもカラオケ！
 
-do this to execute this program
+python3.10とかが想定です
 
 ```cli
+python -m venv venv
+pip install -r requirements.txt
 python3 -m src.main
 ```
 
-to install package
-
-```cli
-pip install -r requirements.txt
-```
-
-to generate requirements.txt
-
 ```cli
 pip freeze > requirements.txt
-```
-
-なにこれ興味ある
-
-```cli
-# ターミナルでプロファイリングを実行
-python -m cProfile -o profile.out main_window.py 
-# (main_window.py はあなたのアプリケーションのメインファイル)
-
-# snakeviz を使ってプロファイル結果を可視化
-snakeviz profile.out
 ```
 
 ## メモ
