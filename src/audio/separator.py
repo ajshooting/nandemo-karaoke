@@ -10,6 +10,7 @@ class Separator:
         self.audio_adapter = AudioAdapter.default()
 
     def separate(self, input_path):
+        # ここでは音源ファイルのpathが渡される
         filename = os.path.splitext(os.path.basename(input_path))[0]
         output_directory = os.path.join("data", "output", filename)
         vocals_path = os.path.join(output_directory, "vocals.wav")

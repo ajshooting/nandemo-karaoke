@@ -10,6 +10,7 @@ class PitchExtractor:
         self.volume_threshold = 0.02  # 音量の閾値
 
     def _get_cache_file_path(self, audio_path):
+        # ここでは分離後のpathが渡される
         parent_dir = os.path.dirname(audio_path)
         return os.path.join(parent_dir, "pitch.json")
 

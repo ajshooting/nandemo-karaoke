@@ -12,8 +12,10 @@ class Recognizer:
         # os.makedirs(self.cache_dir, exist_ok=True)
 
     def _get_cache_file_path(self, audio_path):
-        parent_dir = os.path.dirname(audio_path)
-        return os.path.join(parent_dir, "recognized.json")
+        # ここでは音源ファイルのpathが渡される
+        filename = os.path.splitext(os.path.basename(audio_path))[0]
+        output_directory = os.path.join("data", "output", filename)
+        return os.path.join(output_directory, "recognized.json")
 
     def recognize_lyrics(self, audio_path):
         cache_file_path = self._get_cache_file_path(audio_path)
