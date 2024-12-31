@@ -13,7 +13,6 @@ python3 -m src.main
 
 <img width="912" alt="screen" src="https://github.com/user-attachments/assets/ea181ef8-c9df-410d-90b8-cc4302136cb0" />
 
-
 ```cli
 pip freeze > requirements.txt
 ```
