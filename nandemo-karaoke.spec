@@ -1,12 +1,16 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-
 a = Analysis(
     ['src/main.py'],
     pathex=[],
-    binaries=[],
-    datas=[('src/gui/ui/main_window.ui', 'gui/ui')],
-    hiddenimports=['spleeter'],
+    # binaries=[('venv/bin/spleeter', '.'),],
+    datas=[
+        ('src/gui/ui', 'gui/ui'),
+        ('venv/lib/python3.10/site-packages/spleeter/resources', 'spleeter/resources'),
+        ('venv/lib/python3.10/site-packages/whisper/assets','whisper/assets'),
+        ('pretrained_models', 'spleeter/pretrained_models'),
+    ],
+    hiddenimports=['spleeter','whisper'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
