@@ -69,8 +69,9 @@ class Recognizer:
 
             return formatted_result
 
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             print(f"音声ファイルが見つかりません: {audio_path}")
+            print(e)
             return None
         except Exception as e:
             print(f"音声認識エラー: {e}")
