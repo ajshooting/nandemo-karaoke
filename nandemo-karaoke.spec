@@ -6,7 +6,7 @@ a = Analysis(
     # binaries=[('venv/bin/spleeter', '.'),],
     datas=[
         ('src/gui/ui', 'gui/ui'),
-        ('venv/lib/python3.10/site-packages/spleeter/resources', 'spleeter/resources'),
+        ('venv/lib/python3.10/site-packages/spleeter', 'spleeter'),
         ('venv/lib/python3.10/site-packages/whisper/assets','whisper/assets'),
         ('pretrained_models', 'spleeter/pretrained_models'),
     ],
