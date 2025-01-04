@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import pyqtSlot, QTimer, Qt, QThread, pyqtSignal
 from PyQt6.uic import loadUi
 from PyQt6.QtGui import QPixmap, QDragEnterEvent, QDropEvent
+import os,sys
 
 # カスタムウィジェットをインポート
 from src.gui.widgets.pitch_bar import PitchBar
@@ -85,7 +86,11 @@ class SeparationThread(QThread):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        loadUi("src/gui/ui/main_window.ui", self)
+        
+        # こうしないとpyinstallerでうまくいかない..?
+        base_path = os.path.dirname(os.path.abspath(sys.argv[0]))
+        ui_path = os.path.join(base_path, "gui/ui/main_window.ui")
+        loadUi(ui_path, self)
 
         # ウィジェットの取得 (.uiのobjectName)
         self.lyrics_label = self.findChild(QLabel, "lyricsLabel")
