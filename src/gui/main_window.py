@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import pyqtSlot, QTimer, Qt, QThread, pyqtSignal
 from PyQt6.uic import loadUi
 from PyQt6.QtGui import QPixmap, QDragEnterEvent, QDropEvent
-import os,sys
+import os, sys
 
 # カスタムウィジェットをインポート
 from src.gui.widgets.pitch_bar import PitchBar
@@ -27,66 +27,10 @@ from src.lyrics.synchronizer import Synchronizer
 from src.lyrics.recognizer import Recognizer  # Recognizerのインポート
 
 
-class PitchExtractionThread(QThread):
-    finished_signal = pyqtSignal(list)
-    error_signal = pyqtSignal(str)
-
-    def __init__(self, audio_path):
-        super().__init__()
-        self.audio_path = audio_path
-        self.pitch_extractor = PitchExtractor()
-
-    def run(self):
-        try:
-            pitch_data = self.pitch_extractor.extract_pitch(self.audio_path)
-            self.finished_signal.emit(pitch_data)
-        except Exception as e:
-            self.error_signal.emit(str(e))
-
-
-class RecognitionThread(QThread):
-    finished_signal = pyqtSignal(list)
-    error_signal = pyqtSignal(str)
-    progress_signal = pyqtSignal(str)
-
-    def __init__(self, audio_path, parent=None):
-        super().__init__(parent)
-        self.audio_path = audio_path
-        self.recognizer = Recognizer()
-
-    def run(self):
-        self.progress_signal.emit("音声認識を実行中...")
-        try:
-            lyrics_data = self.recognizer.recognize_lyrics(self.audio_path)
-            if lyrics_data:
-                self.finished_signal.emit(lyrics_data)
-            else:
-                self.error_signal.emit("音声認識に失敗しました。")
-        except Exception as e:
-            self.error_signal.emit(f"音声認識エラー: {e}")
-
-
-class SeparationThread(QThread):
-    finished_signal = pyqtSignal(dict)
-    error_signal = pyqtSignal(str)
-
-    def __init__(self, input_path):
-        super().__init__()
-        self.input_path = input_path
-        self.separator = Separator()
-
-    def run(self):
-        try:
-            separated_paths = self.separator.separate(self.input_path)
-            self.finished_signal.emit(separated_paths)
-        except Exception as e:
-            self.error_signal.emit(str(e))
-
-
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        
+
         # こうしないとpyinstallerでうまくいかない..?
         base_path = os.path.dirname(os.path.abspath(sys.argv[0]))
         ui_path = os.path.join(base_path, "gui/ui/main_window.ui")
@@ -128,7 +72,6 @@ class MainWindow(QMainWindow):
         self.pitch_extractor = PitchExtractor()
         self.lyric_synchronizer = Synchronizer()
         self.recognizer = Recognizer()
-        self.recognition_thread = None
 
         # 初期設定
         self.current_song_path = ""  # 現在の曲のパス
@@ -145,11 +88,6 @@ class MainWindow(QMainWindow):
 
         self.lyrics_label = self.findChild(QLabel, "lyricsLabel")
         self.lyrics_label.setTextFormat(Qt.TextFormat.RichText)  # リッチテキストを有効
-
-        # 各種スレッドを保持する変数を初期化
-        self.separation_thread = None
-        self.recognition_thread = None
-        self.pitch_extraction_thread = None
 
     def dragEnterEvent(self, event: QDragEnterEvent):
         if event.mimeData().hasUrls():
@@ -175,104 +113,80 @@ class MainWindow(QMainWindow):
 
     def process_audio_file(self, file_path):
         self.current_song_path = file_path
-        self.start_separation(file_path)
-        self.start_recognition(file_path)
-        # self.start_pitch_extraction(file_path)
+        self.start_processing(file_path)
 
-    def start_pitch_extraction(self, audio_path):
-        self.pitch_extraction_thread = PitchExtractionThread(audio_path)
-        self.pitch_extraction_thread.finished_signal.connect(
-            self.on_pitch_extraction_finished
-        )
-        self.pitch_extraction_thread.error_signal.connect(
-            self.on_pitch_extraction_error
-        )
-        self.pitch_extraction_thread.start()
+    def start_processing(self, file_path):
+        # 音源分離
+        progress_dialog = QProgressDialog("音源分離処理中...", None, 0, 0, self)
+        progress_dialog.setCancelButtonText(None)
+        progress_dialog.setModal(True)
+        progress_dialog.show()
 
-    def on_pitch_extraction_finished(self, pitch_data):
-        self.pitch_data = pitch_data
-        QMessageBox.information(self, "完了", "ピッチ解析が完了しました。")
-        # ピッチ解析が完了したら、ピッチバーウィジェットにデータを設定
-        self.pitch_bar_widget.set_pitch_data(pitch_data)
-        self.pitch_bar_widget.reset()
+        separator = Separator()
+        try:
+            separated_paths = separator.separate(file_path)
+        except Exception as e:
+            progress_dialog.close()
+            QMessageBox.critical(
+                self, "エラー", f"音源分離中にエラーが発生しました: {e}"
+            )
+            return
+        progress_dialog.close()
+        self.separated_song_paths = separated_paths
+        self.accompaniment_path = separated_paths.get("accompaniment")
+        vocals_path = separated_paths.get("vocals")
+        QMessageBox.information(self, "完了", "音源分離が完了しました。")
 
-    def on_pitch_extraction_error(self, error_message):
-        QMessageBox.critical(
-            self, "エラー", f"ピッチ解析中にエラーが発生しました: {error_message}"
-        )
-
-    def start_recognition(self, audio_path):
-        self.recognition_progress_dialog = QProgressDialog(
+        # 音声認識
+        recognition_progress_dialog = QProgressDialog(
             "音声認識を実行中...", None, 0, 0, self
         )
-        self.recognition_progress_dialog.setCancelButtonText(None)
-        self.recognition_progress_dialog.setModal(True)
-        self.recognition_progress_dialog.show()
+        recognition_progress_dialog.setCancelButtonText(None)
+        recognition_progress_dialog.setModal(True)
+        recognition_progress_dialog.show()
 
-        self.recognition_thread = RecognitionThread(audio_path, self)
-        self.recognition_thread.finished_signal.connect(self.on_recognition_finished)
-        self.recognition_thread.error_signal.connect(self.on_recognition_error)
-        self.recognition_thread.progress_signal.connect(
-            self.recognition_progress_dialog.setLabelText
-        )
-        self.recognition_thread.start()
-
-    def on_recognition_finished(self, lyrics_data):
-        self.recognition_progress_dialog.close()
+        recognizer = Recognizer()
+        try:
+            lyrics_data = recognizer.recognize_lyrics(
+                file_path
+            )  # 分離前のファイルパスを渡すように変更
+            if not lyrics_data:
+                raise ValueError("音声認識に失敗しました。")
+        except Exception as e:
+            recognition_progress_dialog.close()
+            QMessageBox.critical(
+                self, "エラー", f"音声認識中にエラーが発生しました: {e}"
+            )
+            return
+        recognition_progress_dialog.close()
         self.recognized_lyrics = lyrics_data
         QMessageBox.information(self, "完了", "音声認識が完了しました。")
         self.current_segment_index = 0  # 音声認識完了時にリセット
         self.lyrics_label.setText("")
 
-    def on_recognition_error(self, error_message):
-        self.recognition_progress_dialog.close()
-        QMessageBox.critical(
-            self, "エラー", f"音声認識中にエラーが発生しました: {error_message}"
-        )
-
-    def start_separation(self, input_path):
-        self.progress_dialog = QProgressDialog("音源分離処理中...", None, 0, 0, self)
-        self.progress_dialog.setCancelButtonText(None)
-        self.progress_dialog.setModal(True)
-        self.progress_dialog.show()
-
-        self.separation_thread = SeparationThread(input_path)
-        self.separation_thread.finished_signal.connect(self.on_separation_finished)
-        self.separation_thread.error_signal.connect(self.on_separation_error)
-        self.separation_thread.start()
-
-    def on_separation_finished(self, separated_paths):
-        self.progress_dialog.close()
-        self.separated_song_paths = separated_paths
-
-        # 分離が完了したら、伴奏ファイルのパスを保存
-        self.accompaniment_path = self.separated_song_paths.get("accompaniment")
-        vocals_path = self.separated_song_paths.get("vocals")
-
-        # vocalに音声認識をする予定だったが、音源そのままを認識させた方が精度が高かった..
-        # if vocals_path:
-        #     self.start_recognition(vocals_path)
-        # else:
-        #     QMessageBox.warning(
-        #         self, "警告", "ボーカルファイルが見つかりませんでした。"
-        #     )
-
-        # ピッチ解析を開始 (ボーカルに対して実行)
-        if vocals_path:
-            self.start_pitch_extraction(vocals_path)
-        else:
+        # ピッチ解析
+        if not vocals_path:
             QMessageBox.warning(
-                self, "警告", "ボーカルファイルが見つかりませんでした。"
+                self,
+                "警告",
+                "ボーカルファイルが見つかりませんでした。ピッチ解析をスキップします。",
             )
+            return
 
-        # ここにおけばOK押す前に次の処理が開始されると予想
-        QMessageBox.information(self, "完了", "音源分離が完了しました。")
+        pitch_extractor = PitchExtractor()
+        try:
+            pitch_data = pitch_extractor.extract_pitch(vocals_path)
+        except Exception as e:
+            QMessageBox.critical(
+                self, "エラー", f"ピッチ解析中にエラーが発生しました: {e}"
+            )
+            return
 
-    def on_separation_error(self, error_message):
-        self.progress_dialog.close()
-        QMessageBox.critical(
-            self, "エラー", f"音源分離中にエラーが発生しました: {error_message}"
-        )
+        self.pitch_data = pitch_data
+        QMessageBox.information(self, "完了", "ピッチ解析が完了しました。")
+        # ピッチ解析が完了したら、ピッチバーウィジェットにデータを設定
+        self.pitch_bar_widget.set_pitch_data(pitch_data)
+        self.pitch_bar_widget.reset()
 
     @pyqtSlot()
     def on_play_clicked(self):
