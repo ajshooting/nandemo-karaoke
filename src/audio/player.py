@@ -1,6 +1,6 @@
 from pydub import AudioSegment
 import simpleaudio as sa
-import time
+import time, os
 
 
 class Player:
@@ -12,10 +12,10 @@ class Player:
     def play(self, audio_path):
         try:
             if audio_path.endswith(".mp3"):
-                # MP3 ファイルを WAV に変換
+                os.makedirs("data/temp/", exist_ok=True)
                 audio = AudioSegment.from_mp3(audio_path)
                 audio.export("data/temp/temp.wav", format="wav")
-                audio_path = "temp.wav"
+                audio_path = "data/temp/temp.wav"
 
             if self.play_obj and self.play_obj.is_playing():
                 self.play_obj.stop()
