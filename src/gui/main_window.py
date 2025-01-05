@@ -13,7 +13,15 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import pyqtSlot, QTimer, Qt, QThread, pyqtSignal
 from PyQt6.uic import loadUi
 from PyQt6.QtGui import QPixmap, QDragEnterEvent, QDropEvent
-import os,sys
+import os, sys
+import logging
+
+# ロギング設定
+logging.basicConfig(
+    filename="app.log",
+    level=logging.DEBUG,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
 
 # カスタムウィジェットをインポート
 from src.gui.widgets.pitch_bar import PitchBar
@@ -35,13 +43,18 @@ class PitchExtractionThread(QThread):
         super().__init__()
         self.audio_path = audio_path
         self.pitch_extractor = PitchExtractor()
+        logging.info(f"PitchExtractionThread initialized with audio_path: {audio_path}")
 
     def run(self):
+        logging.info(f"PitchExtractionThread started for: {self.audio_path}")
         try:
             pitch_data = self.pitch_extractor.extract_pitch(self.audio_path)
             self.finished_signal.emit(pitch_data)
+            logging.info("PitchExtractionThread finished successfully.")
         except Exception as e:
-            self.error_signal.emit(str(e))
+            error_message = f"Error in PitchExtractionThread: {e}"
+            self.error_signal.emit(error_message)
+            logging.error(error_message, exc_info=True)
 
 
 class RecognitionThread(QThread):
@@ -53,17 +66,24 @@ class RecognitionThread(QThread):
         super().__init__(parent)
         self.audio_path = audio_path
         self.recognizer = Recognizer()
+        logging.info(f"RecognitionThread initialized with audio_path: {audio_path}")
 
     def run(self):
+        logging.info(f"RecognitionThread started for: {self.audio_path}")
         self.progress_signal.emit("音声認識を実行中...")
         try:
             lyrics_data = self.recognizer.recognize_lyrics(self.audio_path)
             if lyrics_data:
                 self.finished_signal.emit(lyrics_data)
+                logging.info("RecognitionThread finished successfully.")
             else:
-                self.error_signal.emit("音声認識に失敗しました。")
+                error_message = "音声認識に失敗しました。"
+                self.error_signal.emit(error_message)
+                logging.error(error_message)
         except Exception as e:
-            self.error_signal.emit(f"音声認識エラー: {e}")
+            error_message = f"音声認識エラー: {e}"
+            self.error_signal.emit(error_message)
+            logging.error(error_message, exc_info=True)
 
 
 class SeparationThread(QThread):
@@ -74,23 +94,31 @@ class SeparationThread(QThread):
         super().__init__()
         self.input_path = input_path
         self.separator = Separator()
+        logging.info(f"SeparationThread initialized with input_path: {input_path}")
 
     def run(self):
+        logging.info(f"SeparationThread started for: {self.input_path}")
         try:
             separated_paths = self.separator.separate(self.input_path)
             self.finished_signal.emit(separated_paths)
+            logging.info(
+                f"SeparationThread finished successfully. Separated paths: {separated_paths}"
+            )
         except Exception as e:
-            self.error_signal.emit(str(e))
+            error_message = f"Error in SeparationThread: {e}"
+            self.error_signal.emit(error_message)
+            logging.error(error_message, exc_info=True)
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        
+
         # こうしないとpyinstallerでうまくいかない..?
-        base_path = os.path.dirname(os.path.abspath(sys.argv[0]))
+        base_path = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
         ui_path = os.path.join(base_path, "gui/ui/main_window.ui")
         loadUi(ui_path, self)
+        logging.info(f"UI loaded from: {ui_path}")
 
         # ウィジェットの取得 (.uiのobjectName)
         self.lyrics_label = self.findChild(QLabel, "lyricsLabel")
@@ -151,6 +179,8 @@ class MainWindow(QMainWindow):
         self.recognition_thread = None
         self.pitch_extraction_thread = None
 
+        logging.info("MainWindow initialized")
+
     def dragEnterEvent(self, event: QDragEnterEvent):
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
@@ -159,6 +189,7 @@ class MainWindow(QMainWindow):
         if event.mimeData().hasUrls():
             url = event.mimeData().urls()[0]
             file_path = url.toLocalFile()
+            logging.info(f"File dropped: {file_path}")
             self.process_audio_file(file_path)
 
     def on_drop_area_clicked(self, event):
@@ -171,15 +202,18 @@ class MainWindow(QMainWindow):
             options=options,
         )
         if file_name:
+            logging.info(f"File selected: {file_name}")
             self.process_audio_file(file_name)
 
     def process_audio_file(self, file_path):
         self.current_song_path = file_path
+        logging.info(f"Processing audio file: {file_path}")
         self.start_separation(file_path)
         self.start_recognition(file_path)
         # self.start_pitch_extraction(file_path)
 
     def start_pitch_extraction(self, audio_path):
+        logging.info(f"Starting pitch extraction for: {audio_path}")
         self.pitch_extraction_thread = PitchExtractionThread(audio_path)
         self.pitch_extraction_thread.finished_signal.connect(
             self.on_pitch_extraction_finished
@@ -195,13 +229,16 @@ class MainWindow(QMainWindow):
         # ピッチ解析が完了したら、ピッチバーウィジェットにデータを設定
         self.pitch_bar_widget.set_pitch_data(pitch_data)
         self.pitch_bar_widget.reset()
+        logging.info("Pitch extraction finished successfully.")
 
     def on_pitch_extraction_error(self, error_message):
         QMessageBox.critical(
             self, "エラー", f"ピッチ解析中にエラーが発生しました: {error_message}"
         )
+        logging.error(f"Error during pitch extraction: {error_message}")
 
     def start_recognition(self, audio_path):
+        logging.info(f"Starting recognition for: {audio_path}")
         self.recognition_progress_dialog = QProgressDialog(
             "音声認識を実行中...", None, 0, 0, self
         )
@@ -223,14 +260,17 @@ class MainWindow(QMainWindow):
         QMessageBox.information(self, "完了", "音声認識が完了しました。")
         self.current_segment_index = 0  # 音声認識完了時にリセット
         self.lyrics_label.setText("")
+        logging.info("Recognition finished successfully.")
 
     def on_recognition_error(self, error_message):
         self.recognition_progress_dialog.close()
         QMessageBox.critical(
             self, "エラー", f"音声認識中にエラーが発生しました: {error_message}"
         )
+        logging.error(f"Error during recognition: {error_message}")
 
     def start_separation(self, input_path):
+        logging.info(f"Starting separation for: {input_path}")
         self.progress_dialog = QProgressDialog("音源分離処理中...", None, 0, 0, self)
         self.progress_dialog.setCancelButtonText(None)
         self.progress_dialog.setModal(True)
@@ -267,12 +307,16 @@ class MainWindow(QMainWindow):
 
         # ここにおけばOK押す前に次の処理が開始されると予想
         QMessageBox.information(self, "完了", "音源分離が完了しました。")
+        logging.info(
+            f"Separation finished successfully. Separated paths: {separated_paths}"
+        )
 
     def on_separation_error(self, error_message):
         self.progress_dialog.close()
         QMessageBox.critical(
             self, "エラー", f"音源分離中にエラーが発生しました: {error_message}"
         )
+        logging.error(f"Error during separation: {error_message}")
 
     @pyqtSlot()
     def on_play_clicked(self):
@@ -307,6 +351,7 @@ class MainWindow(QMainWindow):
 
         self.current_word_index = 0
         self.update_lyrics_display()  # 初期表示のため呼び出す
+        logging.info(f"Playing audio: {self.accompaniment_path}")
 
     @pyqtSlot()
     def on_stop_clicked(self):
@@ -318,6 +363,7 @@ class MainWindow(QMainWindow):
 
         self.current_segment_index = 0  # 停止時にリセット
         self.current_word_index = 0
+        logging.info("Stopping audio playback.")
 
     @pyqtSlot()
     def update_pitch_bar(self):
@@ -413,6 +459,7 @@ def main():
     main_window = MainWindow()
     main_window.show()
     app.exec()
+    logging.info("Application started")
 
 
 if __name__ == "__main__":
