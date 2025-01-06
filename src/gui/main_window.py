@@ -362,7 +362,6 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot()
     def on_search_clicked(self):
-        print("google検索")
         if not self.current_song_path:
             QMessageBox.warning(self, "警告", "音源ファイルが選択されていません。")
             return

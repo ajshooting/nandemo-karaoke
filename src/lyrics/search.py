@@ -29,6 +29,8 @@ class Search:
                 self.browser_controller.open_new_tab(search_url)
             else:
                 webbrowser.open_new_tab(search_url)
+                
+            print(f"google検索: {query}")
 
         except Exception as e:
             print(f"エラーが発生しました: {e}")
