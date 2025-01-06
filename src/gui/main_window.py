@@ -338,6 +338,8 @@ class MainWindow(QMainWindow):
             )
             return
 
+        # それぞれの再生時に停止時と同じ処理をするべきなのかも..?
+
         self.lyrics_label.setText("")
         self.pitch_bar_widget.reset()
 

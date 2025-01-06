@@ -15,17 +15,20 @@ class Copy:
 
             output_path = os.path.join(output_dir, "music.mp3")
 
-            if ext.lower() == "mp3":
-                shutil.copy2(input_path, output_path)
+            if os.path.exists(output_path):
+                print(f"コピー済みのファイルが存在: {output_path}")
             else:
-                try:
-                    sound = AudioSegment.from_file(input_path)
-                    sound.export(output_path, format="mp3")
-                except Exception as e:
-                    print(f"変換エラー(copy.py): {e}")
-                    return None
-
-            print(f"ファイルをコピーしました: {input_path}, {output_path}")
+                if ext.lower() == "mp3":
+                    shutil.copy2(input_path, output_path)
+                else:
+                    try:
+                        sound = AudioSegment.from_file(input_path)
+                        sound.export(output_path, format="mp3")
+                    except Exception as e:
+                        print(f"変換エラー(copy.py): {e}")
+                        return None
+                print(f"ファイルをコピーしました: {input_path}, {output_path}")
             return output_path
+
         except Exception as e:
             print(f"コピーエラー: {e}")
