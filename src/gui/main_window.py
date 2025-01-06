@@ -18,12 +18,13 @@ from PyQt6.QtGui import QPixmap, QDragEnterEvent, QDropEvent
 from src.gui.widgets.pitch_bar import PitchBar
 
 # モジュールをインポート
+from src.audio.copy import Copy
 from src.audio.player import Player
 from src.audio.recorder import Recorder
 from src.audio.separator import Separator
 from src.pitch.extractor import PitchExtractor
 from src.lyrics.synchronizer import Synchronizer
-from src.lyrics.recognizer import Recognizer  # Recognizerのインポート
+from src.lyrics.recognizer import Recognizer 
 
 
 class PitchExtractionThread(QThread):
@@ -118,6 +119,7 @@ class MainWindow(QMainWindow):
         self.timer.setInterval(100)  # 例: 100msごとに更新
 
         # 他の処理系モジュールの初期化
+        self.audio_copy = Copy()
         self.audio_player = Player()
         self.audio_recorder = Recorder()
         self.pitch_extractor = PitchExtractor()
@@ -170,6 +172,7 @@ class MainWindow(QMainWindow):
 
     def process_audio_file(self, file_path):
         self.current_song_path = file_path
+        self.audio_copy.copy_music(file_path)
         self.start_separation(file_path)
         self.start_recognition(file_path)
         # self.start_pitch_extraction(file_path)
