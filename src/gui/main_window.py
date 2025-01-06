@@ -24,7 +24,8 @@ from src.audio.recorder import Recorder
 from src.audio.separator import Separator
 from src.pitch.extractor import PitchExtractor
 from src.lyrics.synchronizer import Synchronizer
-from src.lyrics.recognizer import Recognizer 
+from src.lyrics.recognizer import Recognizer
+from src.lyrics.search import Search
 
 
 class PitchExtractionThread(QThread):
@@ -93,6 +94,7 @@ class MainWindow(QMainWindow):
         self.pitch_bar_widget = self.findChild(PitchBar, "pitchBarWidget")
         self.play_button = self.findChild(QPushButton, "playButton")
         self.stop_button = self.findChild(QPushButton, "stopButton")
+        self.search_button = self.findChild(QPushButton, "searchButton")
         self.score_label = self.findChild(QLabel, "scoreLabel")
 
         # ドロップ/選択エリアの作成
@@ -106,6 +108,7 @@ class MainWindow(QMainWindow):
         # ボタンのシグナルとスロットを接続
         self.play_button.clicked.connect(self.on_play_clicked)
         self.stop_button.clicked.connect(self.on_stop_clicked)
+        self.search_button.clicked.connect(self.on_search_clicked)
         self.drop_area.mousePressEvent = self.on_drop_area_clicked  # クリックイベント
 
         # ドロップイベントのオーバーライド
@@ -124,6 +127,7 @@ class MainWindow(QMainWindow):
         self.audio_recorder = Recorder()
         self.pitch_extractor = PitchExtractor()
         self.lyric_synchronizer = Synchronizer()
+        self.lyric_search = Search()
         self.recognizer = Recognizer()
         self.recognition_thread = None
 
@@ -316,6 +320,15 @@ class MainWindow(QMainWindow):
 
         self.current_segment_index = 0  # 停止時にリセット
         self.current_word_index = 0
+
+    @pyqtSlot()
+    def on_search_clicked(self):
+        print("google検索")
+        if not self.current_song_path:
+            QMessageBox.warning(self, "警告", "音源ファイルが選択されていません。")
+            return
+
+        self.lyric_search.search_lyrics(self.current_song_path)
 
     @pyqtSlot()
     def update_pitch_bar(self):
