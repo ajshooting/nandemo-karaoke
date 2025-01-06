@@ -1,10 +1,11 @@
 import simpleaudio as sa
 import time
+from pydub import AudioSegment
+import io
 
 
 class Player:
     def __init__(self):
-        self.wave_obj = None
         self.play_obj = None
         self.start_time = None
 
@@ -13,9 +14,24 @@ class Player:
             if self.play_obj and self.play_obj.is_playing():
                 self.play_obj.stop()
 
-            self.wave_obj = sa.WaveObject.from_wave_file(audio_path)
-            self.play_obj = self.wave_obj.play()
+            # mp3しか扱わないことにした
+            sound = AudioSegment.from_file(audio_path, format="mp3")
+
+            # WAV形式に変換し、BytesIOオブジェクトとして出力する
+            wav_io = io.BytesIO()
+            sound.export(wav_io, format="wav")
+            wav_io.seek(0)  # BytesIOの先頭に移動する
+
+            # simpleaudioで再生可能なWaveObject
+            wave_obj = sa.WaveObject.from_wave_file(wav_io)
+
+            # 再生する
+            self.play_obj = wave_obj.play()
             self.start_time = time.time()
+
+        except ValueError as ve:
+            print(f"オーディオ再生エラー: {ve}")
+
         except Exception as e:
             print(f"オーディオ再生エラー: {e}")
 

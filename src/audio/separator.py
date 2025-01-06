@@ -13,8 +13,8 @@ class Separator:
         # ここでは音源ファイルのpathが渡される
         filename = os.path.splitext(os.path.basename(input_path))[0]
         output_directory = os.path.join("data", "output", filename)
-        vocals_path = os.path.join(output_directory, "vocals.wav")
-        accompaniment_path = os.path.join(output_directory, "accompaniment.wav")
+        vocals_path = os.path.join(output_directory, "vocals.mp3")
+        accompaniment_path = os.path.join(output_directory, "accompaniment.mp3")
 
         # すでに存在するかどうか
         if os.path.exists(vocals_path) and os.path.exists(accompaniment_path):
@@ -27,7 +27,7 @@ class Separator:
             self.spleeter_separator.separate_to_file(
                 input_path,
                 output_directory,
-                codec="wav",
+                codec="mp3",
                 filename_format="{instrument}.{codec}",  # ファイル名を直接指定
             )
 
