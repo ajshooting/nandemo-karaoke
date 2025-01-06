@@ -40,7 +40,14 @@
                         <item>
                             <widget class="QPushButton" name="playButton">
                                 <property name="text">
-                                    <string>再生</string>
+                                    <string>カラオケ再生</string>
+                                </property>
+                            </widget>
+                        </item>
+                        <item>
+                            <widget class="QPushButton" name="playRawButton">
+                                <property name="text">
+                                    <string>原曲再生</string>
                                 </property>
                             </widget>
                         </item>

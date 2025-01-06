@@ -92,6 +92,7 @@ class MainWindow(QMainWindow):
         # ウィジェットの取得 (.uiのobjectName)
         self.lyrics_label = self.findChild(QLabel, "lyricsLabel")
         self.pitch_bar_widget = self.findChild(PitchBar, "pitchBarWidget")
+        self.play_raw_button = self.findChild(QPushButton, "playRawButton")
         self.play_button = self.findChild(QPushButton, "playButton")
         self.stop_button = self.findChild(QPushButton, "stopButton")
         self.search_button = self.findChild(QPushButton, "searchButton")
@@ -106,6 +107,7 @@ class MainWindow(QMainWindow):
         self.findChild(QVBoxLayout, "verticalLayout").insertWidget(0, self.drop_area)
 
         # ボタンのシグナルとスロットを接続
+        self.play_raw_button.clicked.connect(self.on_play_raw_clicked)
         self.play_button.clicked.connect(self.on_play_clicked)
         self.stop_button.clicked.connect(self.on_stop_clicked)
         self.search_button.clicked.connect(self.on_search_clicked)
@@ -137,6 +139,7 @@ class MainWindow(QMainWindow):
         self.separated_song_paths = {}
         self.lyrics = []  # 歌詞リスト
         self.pitch_data = []  # 音程データ
+        self.music_path = None  # 音源ファイルのpath
         self.accompaniment_path = None  # 分離後の伴奏ファイルのパスを保存する変数
         self.recognized_lyrics = []  # 音声認識された歌詞を保存するリスト
         self.current_lyric_index = 0  # 現在表示中の歌詞のインデックス
@@ -176,7 +179,7 @@ class MainWindow(QMainWindow):
 
     def process_audio_file(self, file_path):
         self.current_song_path = file_path
-        self.audio_copy.copy_music(file_path)
+        self.music_path = self.audio_copy.copy_music(file_path)
         self.start_separation(file_path)
         self.start_recognition(file_path)
         # self.start_pitch_extraction(file_path)
@@ -291,8 +294,42 @@ class MainWindow(QMainWindow):
             return
 
         if self.accompaniment_path:
-            print(f"再生: {self.accompaniment_path}")
+            print(f"カラオケ再生: {self.accompaniment_path}")
             self.audio_player.play(self.accompaniment_path)
+        else:
+            QMessageBox.warning(
+                self,
+                "警告",
+                "音源ファイルが選択されていません。先に音源ファイルをドロップまたは選択してください。",
+            )
+            return
+
+        self.lyrics_label.setText("")
+        self.pitch_bar_widget.reset()
+
+        self.timer.start()
+        self.current_lyric_index = 0  # 再生開始時にインデックスをリセット
+
+        self.current_word_index = 0
+        self.update_lyrics_display()  # 初期表示のため呼び出す
+
+    @pyqtSlot()
+    def on_play_raw_clicked(self):
+        if not self.current_song_path:
+            QMessageBox.warning(self, "警告", "音源ファイルが選択されていません。")
+            return
+
+        if not self.recognized_lyrics:
+            QMessageBox.warning(self, "警告", "音声認識が完了していません。")
+            return
+
+        if not self.pitch_data:
+            QMessageBox.warning(self, "警告", "ピッチ解析が完了していません。")
+            return
+
+        if self.music_path:
+            print(f"原曲再生: {self.music_path}")
+            self.audio_player.play(self.music_path)
         else:
             QMessageBox.warning(
                 self,
