@@ -19,7 +19,7 @@ class Separator:
         try:
             self.model = model
             self.spleeter_separator = SpleeterSeparator(self.model)
-            
+
             # self.audio_adapter = AudioAdapter.default()
 
         except Exception as e:
@@ -53,6 +53,9 @@ class Separator:
             else:
                 print(f"分離処理を開始します: {input_path}")
                 os.makedirs(output_directory, exist_ok=True)
+
+                print(input_path)
+                print(output_directory)
 
                 self.spleeter_separator.separate_to_file(
                     input_path,
