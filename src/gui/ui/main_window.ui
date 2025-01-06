@@ -54,6 +54,17 @@
                     </layout>
                 </item>
                 <item>
+                    <layout class="QHBoxLayout" name="horizontalLayout">
+                        <item>
+                            <widget class="QPushButton" name="searchButton">
+                                <property name="text">
+                                    <string>Googleで歌詞検索</string>
+                                </property>
+                            </widget>
+                        </item>
+                    </layout>
+                </item>
+                <item>
                     <widget class="QLabel" name="scoreLabel">
                         <property name="text">
                             <string>スコア: 0</string>
