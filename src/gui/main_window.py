@@ -174,6 +174,7 @@ class MainWindow(QMainWindow):
         self.lyrics_label.setTextFormat(Qt.TextFormat.RichText)  # リッチテキストを有効
 
         # 各種スレッドを保持する変数を初期化
+        self.download_thread = None
         self.separation_thread = None
         self.recognition_thread = None
         self.pitch_extraction_thread = None
@@ -187,7 +188,7 @@ class MainWindow(QMainWindow):
             url = event.mimeData().urls()[0]
             file_path = url.toLocalFile()
             self.music_path = self.audio_copy.copy_music(file_path)
-            self.process_audio_file(file_path)
+            self.process_audio_file(self.music_path)
 
     def on_drop_area_clicked(self, event):
         options = QFileDialog.Option.DontUseNativeDialog
@@ -200,17 +201,38 @@ class MainWindow(QMainWindow):
         )
         if file_name:
             self.music_path = self.audio_copy.copy_music(file_name)
-            self.process_audio_file(file_name)
+            self.process_audio_file(self.music_path)
 
     def on_download_clicked(self):
-        search_query = self.download_input.text()
-        if search_query:
-            output_path = self.downloader.download_music(search_query)
-            # DLが完了後、処理を開始する
-            self.process_audio_file(output_path)
+        self.query = self.download_input.text()
+        print(self.query)
+        if self.query:
+            self.download_progress_dialog = QProgressDialog(
+                "音源をダウンロード中...", None, 0, 0, self
+            )
+            self.download_progress_dialog.setCancelButtonText(None)
+            self.download_progress_dialog.setModal(True)
+            self.download_progress_dialog.show()
+
+            self.download_thread = DownloadThread(self.query)
+            self.download_thread.finished_signal.connect(self.on_download_finished)
+            self.download_thread.error_signal.connect(self.on_download_error)
+            self.download_thread.start()
         else:
             print(f"検索キーワードが入力されていません。")
             QMessageBox.warning(self, "警告", "検索キーワードが入力されていません。")
+
+    def on_download_finished(self, output_file):
+        self.download_progress_dialog.close()
+        self.music_path = output_file
+        # DLが完了後、処理を開始する
+        self.process_audio_file(output_file)
+
+    def on_download_error(self, error_message):
+        self.download_progress_dialog.close()
+        QMessageBox.critical(
+            self, "エラー", f"音源ダウンロード中にエラーが発生しました: {error_message}"
+        )
 
     def process_audio_file(self, file_path):
         self.current_song_path = file_path
