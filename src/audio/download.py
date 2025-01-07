@@ -3,7 +3,7 @@ import yt_dlp
 import os
 
 
-class Download:
+class Downloader:
     def __init__(self):
         pass
 
@@ -18,9 +18,9 @@ class Download:
             video_url = "https://youtube.com" + results[0]["url_suffix"]
             video_title = results[0]["title"]
 
-            output_dir = os.path.join("data", video_title)
+            output_dir = os.path.join("data", "output", video_title)
             os.makedirs(output_dir, exist_ok=True)  # ディレクトリが存在しない場合は作成
-            output_file = os.path.join(output_dir, "music.mp3")
+            output_file = os.path.join(output_dir, "music")
 
             if os.path.exists(output_file):
                 print(f"ダウンロード済みのファイルが存在します: {output_file}")
@@ -44,6 +44,9 @@ class Download:
                 ydl.download([video_url])
 
             print(f"'{video_title}' のダウンロードが完了")
+
+            # yt_dlpでmp3がくっついちゃうのかな..?
+            return output_file + ".mp3"
 
         except Exception as e:
             print(f"ダウンロードエラー: {e}")
