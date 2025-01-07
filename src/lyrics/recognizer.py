@@ -13,8 +13,8 @@ class Recognizer:
 
     def _get_cache_file_path(self, audio_path):
         # ここでは音源ファイルのpathが渡される
-        filename = os.path.splitext(os.path.basename(audio_path))[0]
-        output_directory = os.path.join("data", "output", filename)
+        music_name = os.path.basename(os.path.dirname(audio_path))
+        output_directory = os.path.join("data", "output", music_name)
         return os.path.join(output_directory, "recognized.json")
 
     def recognize_lyrics(self, audio_path):

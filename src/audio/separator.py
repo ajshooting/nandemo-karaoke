@@ -11,8 +11,8 @@ class Separator:
 
     def separate(self, input_path):
         # ここでは音源ファイルのpathが渡される
-        filename = os.path.splitext(os.path.basename(input_path))[0]
-        output_directory = os.path.join("data", "output", filename)
+        music_name = os.path.basename(os.path.dirname(input_path))
+        output_directory = os.path.join("data", "output", music_name)
         vocals_path = os.path.join(output_directory, "vocals.mp3")
         accompaniment_path = os.path.join(output_directory, "accompaniment.mp3")
 
