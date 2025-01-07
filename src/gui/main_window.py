@@ -4,6 +4,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
+    QLineEdit,
     QWidget,
     QFileDialog,
     QMessageBox,
@@ -19,6 +20,7 @@ from src.gui.widgets.pitch_bar import PitchBar
 
 # モジュールをインポート
 from src.audio.copy import Copy
+from src.audio.download import Downloader
 from src.audio.player import Player
 from src.audio.recorder import Recorder
 from src.audio.separator import Separator
@@ -84,6 +86,23 @@ class SeparationThread(QThread):
             self.error_signal.emit(str(e))
 
 
+class DownloadThread(QThread):
+    finished_signal = pyqtSignal(str)
+    error_signal = pyqtSignal(str)
+
+    def __init__(self, query):
+        super().__init__()
+        self.query = query
+        self.downloader = Downloader()
+
+    def run(self):
+        try:
+            output_path = self.downloader.download_music(self.query)
+            self.finished_signal.emit(output_path)
+        except Exception as e:
+            self.error_signal.emit(str(e))
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -96,6 +115,8 @@ class MainWindow(QMainWindow):
         self.play_button = self.findChild(QPushButton, "playButton")
         self.stop_button = self.findChild(QPushButton, "stopButton")
         self.search_button = self.findChild(QPushButton, "searchButton")
+        self.download_input = self.findChild(QLineEdit, "downloadInput")
+        self.download_button = self.findChild(QPushButton, "downloadButton")
         self.score_label = self.findChild(QLabel, "scoreLabel")
 
         # ドロップ/選択エリアの作成
@@ -112,6 +133,7 @@ class MainWindow(QMainWindow):
         self.stop_button.clicked.connect(self.on_stop_clicked)
         self.search_button.clicked.connect(self.on_search_clicked)
         self.drop_area.mousePressEvent = self.on_drop_area_clicked  # クリックイベント
+        self.download_button.clicked.connect(self.on_download_clicked)
 
         # ドロップイベントのオーバーライド
         self.drop_area.dragEnterEvent = self.dragEnterEvent
@@ -125,6 +147,7 @@ class MainWindow(QMainWindow):
 
         # 他の処理系モジュールの初期化
         self.audio_copy = Copy()
+        self.downloader = Downloader()
         self.audio_player = Player()
         self.audio_recorder = Recorder()
         self.pitch_extractor = PitchExtractor()
@@ -163,6 +186,7 @@ class MainWindow(QMainWindow):
         if event.mimeData().hasUrls():
             url = event.mimeData().urls()[0]
             file_path = url.toLocalFile()
+            self.music_path = self.audio_copy.copy_music(file_path)
             self.process_audio_file(file_path)
 
     def on_drop_area_clicked(self, event):
@@ -175,11 +199,21 @@ class MainWindow(QMainWindow):
             options=options,
         )
         if file_name:
+            self.music_path = self.audio_copy.copy_music(file_name)
             self.process_audio_file(file_name)
+
+    def on_download_clicked(self):
+        search_query = self.download_input.text()
+        if search_query:
+            output_path = self.downloader.download_music(search_query)
+            # DLが完了後、処理を開始する
+            self.process_audio_file(output_path)
+        else:
+            print(f"検索キーワードが入力されていません。")
+            QMessageBox.warning(self, "警告", "検索キーワードが入力されていません。")
 
     def process_audio_file(self, file_path):
         self.current_song_path = file_path
-        self.music_path = self.audio_copy.copy_music(file_path)
         self.start_separation(file_path)
         self.start_recognition(file_path)
         # self.start_pitch_extraction(file_path)
