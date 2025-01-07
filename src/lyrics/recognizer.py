@@ -5,7 +5,7 @@ import time
 
 
 class Recognizer:
-    def __init__(self, model_size="base", language="ja", cache_dir="data/output"):
+    def __init__(self, model_size="tiny", language="ja", cache_dir="data/output"):
         self.model_size = model_size
         self.language = language
         self.model = WhisperModel(
@@ -43,7 +43,7 @@ class Recognizer:
 
             # 音声認識の実行 (単語レベルのタイムスタンプを有効化)
             segments, info = self.model.transcribe(
-                audio_path, word_timestamps=True, language=self.language
+                audio_path, word_timestamps=True, language=self.language,
             )
 
             print(
