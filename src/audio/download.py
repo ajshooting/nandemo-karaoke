@@ -19,10 +19,10 @@ class Downloader:
             video_title = results[0]["title"]
 
             output_dir = os.path.join("data", "output", video_title)
-            os.makedirs(output_dir, exist_ok=True)  # ディレクトリが存在しない場合は作成
+            os.makedirs(output_dir, exist_ok=True)
             output_file = os.path.join(output_dir, "music")
 
-            if os.path.exists(output_file):
+            if os.path.exists(output_file + "mp3"):
                 print(f"ダウンロード済みのファイルが存在します: {output_file}")
                 return
 
