@@ -11,6 +11,13 @@ pip install -r requirements.txt
 python3 -m src.main
 ```
 
+faster-whisper を使用する際はよくわからないけどこれを実行しないと動かない  
+OpenMP?が重複してるやつを特定できたら嬉しいらしい？Numpyとか？
+
+```cli
+export KMP_DUPLICATE_LIB_OK=TRUE
+```
+
 <img width="912" alt="screen" src="https://github.com/user-attachments/assets/ea181ef8-c9df-410d-90b8-cc4302136cb0" />
 
 ```cli
