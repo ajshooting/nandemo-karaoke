@@ -19,8 +19,7 @@ class Search:
 
     def search_lyrics(self, filename):
         try:
-            song_title = os.path.basename(filename)
-            song_title = os.path.splitext(song_title)[0]
+            song_title = os.path.basename(os.path.dirname(filename))
             query = urllib.parse.quote(f"{song_title} 歌詞")
 
             search_url = f"https://www.google.com/search?q={query}"
