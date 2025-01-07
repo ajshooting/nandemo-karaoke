@@ -1,13 +1,16 @@
-import whisper
+from faster_whisper import WhisperModel
 import os
 import json
+import time
 
 
 class Recognizer:
     def __init__(self, model_size="base", language="ja", cache_dir="data/output"):
         self.model_size = model_size
         self.language = language
-        self.model = whisper.load_model(self.model_size)
+        self.model = WhisperModel(
+            self.model_size, device="cpu", compute_type="int8"
+        )  # CPUで実行するように変更
         self.cache_dir = cache_dir
         # os.makedirs(self.cache_dir, exist_ok=True)
 
@@ -35,29 +38,43 @@ class Recognizer:
 
         try:
             print(f"音声認識を実行します: {audio_path}")
+
+            start_time = time.time()
+
             # 音声認識の実行 (単語レベルのタイムスタンプを有効化)
-            result = self.model.transcribe(
-                audio_path, word_timestamps=True, fp16=False, language=self.language
+            segments, info = self.model.transcribe(
+                audio_path, word_timestamps=True, language=self.language
             )
 
-            # 結果を整形して返す (単語、開始時間、終了時間)
+            print(
+                "Detected language '%s' with probability %f"
+                % (info.language, info.language_probability)
+            )
+
+            # 結果を整形してリストに格納
             formatted_result = []
-            for segment in result["segments"]:
+            current_segment = {"text": "", "start": None, "end": None, "words": []}
+
+            for segment in segments:
+                for word in segment.words:
+                    if current_segment["start"] is None:
+                        current_segment["start"] = word.start
+
+                    current_segment["text"] += word.word
+                    current_segment["end"] = word.end
+                    current_segment["words"].append(
+                        {"word": word.word, "start": word.start, "end": word.end}
+                    )
+
                 formatted_result.append(
                     {
-                        "text": segment["text"].strip(),
-                        "start": segment["start"],
-                        "end": segment["end"],
-                        "words": [
-                            {
-                                "word": word["word"].strip(),
-                                "start": word["start"],
-                                "end": word["end"],
-                            }
-                            for word in segment["words"]
-                        ],
+                        "text": current_segment["text"].strip(),
+                        "start": current_segment["start"],
+                        "end": current_segment["end"],
+                        "words": current_segment["words"],
                     }
                 )
+                current_segment = {"text": "", "start": None, "end": None, "words": []}
 
             # 結果をキャッシュに保存
             try:
@@ -66,6 +83,10 @@ class Recognizer:
                 print(f"音声認識結果を保存しました: {cache_file_path}")
             except Exception as e:
                 print(f"音声認識結果キャッシュの保存に失敗しました: {e}")
+
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+            print(f"音声認識処理時間: {elapsed_time:.2f}秒")
 
             return formatted_result
 
