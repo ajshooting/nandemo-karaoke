@@ -1,6 +1,7 @@
 import whisper
 import os
 import json
+import time
 
 
 class Recognizer:
@@ -35,6 +36,9 @@ class Recognizer:
 
         try:
             print(f"音声認識を実行します: {audio_path}")
+
+            start_time = time.time()
+
             # 音声認識の実行 (単語レベルのタイムスタンプを有効化)
             result = self.model.transcribe(
                 audio_path, word_timestamps=True, fp16=False, language=self.language
@@ -66,6 +70,10 @@ class Recognizer:
                 print(f"音声認識結果を保存しました: {cache_file_path}")
             except Exception as e:
                 print(f"音声認識結果キャッシュの保存に失敗しました: {e}")
+
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+            print(f"音声認識処理時間: {elapsed_time:.2f}秒")
 
             return formatted_result
 
