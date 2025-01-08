@@ -4,6 +4,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
+    QLineEdit,
     QWidget,
     QFileDialog,
     QMessageBox,
@@ -27,12 +28,15 @@ logging.basicConfig(
 from src.gui.widgets.pitch_bar import PitchBar
 
 # モジュールをインポート
+from src.audio.copy import Copy
+from src.audio.download import Downloader
 from src.audio.player import Player
 from src.audio.recorder import Recorder
 from src.audio.separator import Separator
 from src.pitch.extractor import PitchExtractor
 from src.lyrics.synchronizer import Synchronizer
-from src.lyrics.recognizer import Recognizer  # Recognizerのインポート
+from src.lyrics.recognizer import Recognizer
+from src.lyrics.search import Search
 
 
 class PitchExtractionThread(QThread):
@@ -110,6 +114,42 @@ class SeparationThread(QThread):
             logging.error(error_message, exc_info=True)
 
 
+class DownloadThread(QThread):
+    finished_signal = pyqtSignal(str)
+    error_signal = pyqtSignal(str)
+
+    def __init__(self, query):
+        super().__init__()
+        self.query = query
+        self.downloader = Downloader()
+
+    def run(self):
+        try:
+            output_path = self.downloader.download_music(self.query)
+            self.finished_signal.emit(output_path)
+        except Exception as e:
+            error_message = f"Error in SeparationThread: {e}"
+            self.error_signal.emit(error_message)
+            logging.error(error_message, exc_info=True)
+
+
+class DownloadThread(QThread):
+    finished_signal = pyqtSignal(str)
+    error_signal = pyqtSignal(str)
+
+    def __init__(self, query):
+        super().__init__()
+        self.query = query
+        self.downloader = Downloader()
+
+    def run(self):
+        try:
+            output_path = self.downloader.download_music(self.query)
+            self.finished_signal.emit(output_path)
+        except Exception as e:
+            self.error_signal.emit(str(e))
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -123,8 +163,12 @@ class MainWindow(QMainWindow):
         # ウィジェットの取得 (.uiのobjectName)
         self.lyrics_label = self.findChild(QLabel, "lyricsLabel")
         self.pitch_bar_widget = self.findChild(PitchBar, "pitchBarWidget")
+        self.play_raw_button = self.findChild(QPushButton, "playRawButton")
         self.play_button = self.findChild(QPushButton, "playButton")
         self.stop_button = self.findChild(QPushButton, "stopButton")
+        self.search_button = self.findChild(QPushButton, "searchButton")
+        self.download_input = self.findChild(QLineEdit, "downloadInput")
+        self.download_button = self.findChild(QPushButton, "downloadButton")
         self.score_label = self.findChild(QLabel, "scoreLabel")
 
         # ドロップ/選択エリアの作成
@@ -136,9 +180,12 @@ class MainWindow(QMainWindow):
         self.findChild(QVBoxLayout, "verticalLayout").insertWidget(0, self.drop_area)
 
         # ボタンのシグナルとスロットを接続
+        self.play_raw_button.clicked.connect(self.on_play_raw_clicked)
         self.play_button.clicked.connect(self.on_play_clicked)
         self.stop_button.clicked.connect(self.on_stop_clicked)
+        self.search_button.clicked.connect(self.on_search_clicked)
         self.drop_area.mousePressEvent = self.on_drop_area_clicked  # クリックイベント
+        self.download_button.clicked.connect(self.on_download_clicked)
 
         # ドロップイベントのオーバーライド
         self.drop_area.dragEnterEvent = self.dragEnterEvent
@@ -151,10 +198,13 @@ class MainWindow(QMainWindow):
         self.timer.setInterval(100)  # 例: 100msごとに更新
 
         # 他の処理系モジュールの初期化
+        self.audio_copy = Copy()
+        self.downloader = Downloader()
         self.audio_player = Player()
         self.audio_recorder = Recorder()
         self.pitch_extractor = PitchExtractor()
         self.lyric_synchronizer = Synchronizer()
+        self.lyric_search = Search()
         self.recognizer = Recognizer()
         self.recognition_thread = None
 
@@ -164,6 +214,7 @@ class MainWindow(QMainWindow):
         self.separated_song_paths = {}
         self.lyrics = []  # 歌詞リスト
         self.pitch_data = []  # 音程データ
+        self.music_path = None  # 音源ファイルのpath
         self.accompaniment_path = None  # 分離後の伴奏ファイルのパスを保存する変数
         self.recognized_lyrics = []  # 音声認識された歌詞を保存するリスト
         self.current_lyric_index = 0  # 現在表示中の歌詞のインデックス
@@ -175,6 +226,7 @@ class MainWindow(QMainWindow):
         self.lyrics_label.setTextFormat(Qt.TextFormat.RichText)  # リッチテキストを有効
 
         # 各種スレッドを保持する変数を初期化
+        self.download_thread = None
         self.separation_thread = None
         self.recognition_thread = None
         self.pitch_extraction_thread = None
@@ -190,7 +242,8 @@ class MainWindow(QMainWindow):
             url = event.mimeData().urls()[0]
             file_path = url.toLocalFile()
             logging.info(f"File dropped: {file_path}")
-            self.process_audio_file(file_path)
+            self.music_path = self.audio_copy.copy_music(file_path)
+            self.process_audio_file(self.music_path)
 
     def on_drop_area_clicked(self, event):
         options = QFileDialog.Option.DontUseNativeDialog
@@ -203,7 +256,39 @@ class MainWindow(QMainWindow):
         )
         if file_name:
             logging.info(f"File selected: {file_name}")
-            self.process_audio_file(file_name)
+            self.music_path = self.audio_copy.copy_music(file_name)
+            self.process_audio_file(self.music_path)
+
+    def on_download_clicked(self):
+        self.query = self.download_input.text()
+        print(self.query)
+        if self.query:
+            self.download_progress_dialog = QProgressDialog(
+                "音源をダウンロード中...", None, 0, 0, self
+            )
+            self.download_progress_dialog.setCancelButtonText(None)
+            self.download_progress_dialog.setModal(True)
+            self.download_progress_dialog.show()
+
+            self.download_thread = DownloadThread(self.query)
+            self.download_thread.finished_signal.connect(self.on_download_finished)
+            self.download_thread.error_signal.connect(self.on_download_error)
+            self.download_thread.start()
+        else:
+            print(f"検索キーワードが入力されていません。")
+            QMessageBox.warning(self, "警告", "検索キーワードが入力されていません。")
+
+    def on_download_finished(self, output_file):
+        self.download_progress_dialog.close()
+        self.music_path = output_file
+        # DLが完了後、処理を開始する
+        self.process_audio_file(output_file)
+
+    def on_download_error(self, error_message):
+        self.download_progress_dialog.close()
+        QMessageBox.critical(
+            self, "エラー", f"音源ダウンロード中にエラーが発生しました: {error_message}"
+        )
 
     def process_audio_file(self, file_path):
         self.current_song_path = file_path
@@ -333,7 +418,7 @@ class MainWindow(QMainWindow):
             return
 
         if self.accompaniment_path:
-            print(f"再生: {self.accompaniment_path}")
+            print(f"カラオケ再生: {self.accompaniment_path}")
             self.audio_player.play(self.accompaniment_path)
         else:
             QMessageBox.warning(
@@ -354,6 +439,79 @@ class MainWindow(QMainWindow):
         logging.info(f"Playing audio: {self.accompaniment_path}")
 
     @pyqtSlot()
+    def on_play_raw_clicked(self):
+        if not self.current_song_path:
+            QMessageBox.warning(self, "警告", "音源ファイルが選択されていません。")
+            return
+
+        if not self.recognized_lyrics:
+            QMessageBox.warning(self, "警告", "音声認識が完了していません。")
+            return
+
+        if not self.pitch_data:
+            QMessageBox.warning(self, "警告", "ピッチ解析が完了していません。")
+            return
+
+        if self.music_path:
+            print(f"原曲再生: {self.music_path}")
+            self.audio_player.play(self.music_path)
+        else:
+            QMessageBox.warning(
+                self,
+                "警告",
+                "音源ファイルが選択されていません。先に音源ファイルをドロップまたは選択してください。",
+            )
+            return
+
+        # それぞれの再生時に停止時と同じ処理をするべきなのかも..?
+
+        self.lyrics_label.setText("")
+        self.pitch_bar_widget.reset()
+
+        self.timer.start()
+        self.current_lyric_index = 0  # 再生開始時にインデックスをリセット
+
+        self.current_word_index = 0
+        self.update_lyrics_display()  # 初期表示のため呼び出す
+        logging.info(f"Playing audio: {self.accompaniment_path}")
+
+    @pyqtSlot()
+    def on_play_raw_clicked(self):
+        if not self.current_song_path:
+            QMessageBox.warning(self, "警告", "音源ファイルが選択されていません。")
+            return
+
+        if not self.recognized_lyrics:
+            QMessageBox.warning(self, "警告", "音声認識が完了していません。")
+            return
+
+        if not self.pitch_data:
+            QMessageBox.warning(self, "警告", "ピッチ解析が完了していません。")
+            return
+
+        if self.music_path:
+            print(f"原曲再生: {self.music_path}")
+            self.audio_player.play(self.music_path)
+        else:
+            QMessageBox.warning(
+                self,
+                "警告",
+                "音源ファイルが選択されていません。先に音源ファイルをドロップまたは選択してください。",
+            )
+            return
+
+        # それぞれの再生時に停止時と同じ処理をするべきなのかも..?
+
+        self.lyrics_label.setText("")
+        self.pitch_bar_widget.reset()
+
+        self.timer.start()
+        self.current_lyric_index = 0  # 再生開始時にインデックスをリセット
+
+        self.current_word_index = 0
+        self.update_lyrics_display()  # 初期表示のため呼び出す
+
+    @pyqtSlot()
     def on_stop_clicked(self):
         print("再生停止")
         self.audio_player.stop()
@@ -364,6 +522,22 @@ class MainWindow(QMainWindow):
         self.current_segment_index = 0  # 停止時にリセット
         self.current_word_index = 0
         logging.info("Stopping audio playback.")
+
+    @pyqtSlot()
+    def on_search_clicked(self):
+        if not self.current_song_path:
+            QMessageBox.warning(self, "警告", "音源ファイルが選択されていません。")
+            return
+
+        self.lyric_search.search_lyrics(self.current_song_path)
+
+    @pyqtSlot()
+    def on_search_clicked(self):
+        if not self.current_song_path:
+            QMessageBox.warning(self, "警告", "音源ファイルが選択されていません。")
+            return
+
+        self.lyric_search.search_lyrics(self.current_song_path)
 
     @pyqtSlot()
     def update_pitch_bar(self):

@@ -16,6 +16,20 @@
         <widget class="QWidget" name="centralwidget">
             <layout class="QVBoxLayout" name="verticalLayout">
                 <item>
+                    <layout class="QHBoxLayout" name="downloadLayout">
+                        <item>
+                            <widget class="QLineEdit" name="downloadInput" />
+                        </item>
+                        <item>
+                            <widget class="QPushButton" name="downloadButton">
+                                <property name="text">
+                                    <string>検索</string>
+                                </property>
+                            </widget>
+                        </item>
+                    </layout>
+                </item>
+                <item>
                     <widget class="QLabel" name="lyricsLabel">
                         <property name="text">
                             <string>歌詞が表示されます</string>
@@ -40,7 +54,14 @@
                         <item>
                             <widget class="QPushButton" name="playButton">
                                 <property name="text">
-                                    <string>再生</string>
+                                    <string>カラオケ再生</string>
+                                </property>
+                            </widget>
+                        </item>
+                        <item>
+                            <widget class="QPushButton" name="playRawButton">
+                                <property name="text">
+                                    <string>原曲再生</string>
                                 </property>
                             </widget>
                         </item>
@@ -48,6 +69,17 @@
                             <widget class="QPushButton" name="stopButton">
                                 <property name="text">
                                     <string>停止</string>
+                                </property>
+                            </widget>
+                        </item>
+                    </layout>
+                </item>
+                <item>
+                    <layout class="QHBoxLayout" name="horizontalLayout">
+                        <item>
+                            <widget class="QPushButton" name="searchButton">
+                                <property name="text">
+                                    <string>Googleで歌詞検索</string>
                                 </property>
                             </widget>
                         </item>

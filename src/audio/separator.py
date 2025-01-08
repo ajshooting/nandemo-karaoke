@@ -60,7 +60,7 @@ class Separator:
                 self.spleeter_separator.separate_to_file(
                     input_path,
                     output_directory,
-                    codec="mp3",
+                    codec="wav",
                     filename_format="{instrument}.{codec}",  # ファイル名を直接指定
                 )
 
