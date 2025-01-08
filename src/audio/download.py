@@ -1,6 +1,14 @@
 from youtube_search import YoutubeSearch
 import yt_dlp
-import os
+import os, re
+
+
+def sanitize_filename(filename):
+    # macOS/Linux
+    filename = filename.replace("/", "_").replace("\0", "_")
+    # Windows
+    filename = re.sub(r'[\\:*\?"<>|]', "_", filename)
+    return filename
 
 
 class Downloader:
@@ -16,7 +24,7 @@ class Downloader:
                 return
 
             video_url = "https://youtube.com" + results[0]["url_suffix"]
-            video_title = results[0]["title"]
+            video_title = sanitize_filename(results[0]["title"])
 
             output_dir = os.path.join("data", "output", video_title)
             os.makedirs(output_dir, exist_ok=True)

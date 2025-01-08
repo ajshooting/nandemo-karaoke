@@ -1,6 +1,14 @@
-import os
+import os, re
 import shutil
 from pydub import AudioSegment
+
+
+def sanitize_filename(filename):
+    # macOS/Linux
+    filename = filename.replace("/", "_").replace("\0", "_")
+    # Windows
+    filename = re.sub(r'[\\:*\?"<>|]', "_", filename)
+    return filename
 
 
 class Copy:
@@ -10,7 +18,7 @@ class Copy:
     def copy_music(self, input_path):
         try:
             filename, ext = os.path.splitext(os.path.basename(input_path))
-            output_dir = os.path.join("data", "output", filename)
+            output_dir = os.path.join("data", "output", sanitize_filename(filename))
             os.makedirs(output_dir, exist_ok=True)
 
             output_path = os.path.join(output_dir, "music.mp3")
