@@ -207,12 +207,12 @@ class MainWindow(QMainWindow):
         self.query = self.download_input.text()
         print(self.query)
         if self.query:
-            self.download_progress_dialog = QProgressDialog(
-                "音源をダウンロード中...", None, 0, 0, self
-            )
-            self.download_progress_dialog.setCancelButtonText(None)
-            self.download_progress_dialog.setModal(True)
-            self.download_progress_dialog.show()
+            # self.download_progress_dialog = QProgressDialog(
+            #     "音源をダウンロード中...", None, 0, 0, self
+            # )
+            # self.download_progress_dialog.setCancelButtonText(None)
+            # self.download_progress_dialog.setModal(True)
+            # self.download_progress_dialog.show()
 
             self.download_thread = DownloadThread(self.query)
             self.download_thread.finished_signal.connect(self.on_download_finished)
@@ -223,13 +223,13 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "警告", "検索キーワードが入力されていません。")
 
     def on_download_finished(self, output_file):
-        self.download_progress_dialog.close()
+        # self.download_progress_dialog.close()
         self.music_path = output_file
         # DLが完了後、処理を開始する
         self.process_audio_file(output_file)
 
     def on_download_error(self, error_message):
-        self.download_progress_dialog.close()
+        # self.download_progress_dialog.close()
         QMessageBox.critical(
             self, "エラー", f"音源ダウンロード中にエラーが発生しました: {error_message}"
         )
@@ -252,7 +252,7 @@ class MainWindow(QMainWindow):
 
     def on_pitch_extraction_finished(self, pitch_data):
         self.pitch_data = pitch_data
-        QMessageBox.information(self, "完了", "ピッチ解析が完了しました。")
+        # QMessageBox.information(self, "完了", "ピッチ解析が完了しました。")
         # ピッチ解析が完了したら、ピッチバーウィジェットにデータを設定
         self.pitch_bar_widget.set_pitch_data(pitch_data)
         self.pitch_bar_widget.reset()
@@ -263,39 +263,39 @@ class MainWindow(QMainWindow):
         )
 
     def start_recognition(self, audio_path):
-        self.recognition_progress_dialog = QProgressDialog(
-            "音声認識を実行中...", None, 0, 0, self
-        )
-        self.recognition_progress_dialog.setCancelButtonText(None)
-        self.recognition_progress_dialog.setModal(True)
-        self.recognition_progress_dialog.show()
+        # self.recognition_progress_dialog = QProgressDialog(
+        #     "音声認識を実行中...", None, 0, 0, self
+        # )
+        # self.recognition_progress_dialog.setCancelButtonText(None)
+        # self.recognition_progress_dialog.setModal(True)
+        # self.recognition_progress_dialog.show()
 
         self.recognition_thread = RecognitionThread(audio_path, self)
         self.recognition_thread.finished_signal.connect(self.on_recognition_finished)
         self.recognition_thread.error_signal.connect(self.on_recognition_error)
-        self.recognition_thread.progress_signal.connect(
-            self.recognition_progress_dialog.setLabelText
-        )
+        # self.recognition_thread.progress_signal.connect(
+        #     self.recognition_progress_dialog.setLabelText
+        # )
         self.recognition_thread.start()
 
     def on_recognition_finished(self, lyrics_data):
-        self.recognition_progress_dialog.close()
+        # self.recognition_progress_dialog.close()
         self.recognized_lyrics = lyrics_data
-        QMessageBox.information(self, "完了", "音声認識が完了しました。")
+        # QMessageBox.information(self, "完了", "音声認識が完了しました。")
         self.current_segment_index = 0  # 音声認識完了時にリセット
         self.lyrics_label.setText("")
 
     def on_recognition_error(self, error_message):
-        self.recognition_progress_dialog.close()
+        # self.recognition_progress_dialog.close()
         QMessageBox.critical(
             self, "エラー", f"音声認識中にエラーが発生しました: {error_message}"
         )
 
     def start_separation(self, input_path):
-        self.progress_dialog = QProgressDialog("音源分離処理中...", None, 0, 0, self)
-        self.progress_dialog.setCancelButtonText(None)
-        self.progress_dialog.setModal(True)
-        self.progress_dialog.show()
+        # self.progress_dialog = QProgressDialog("音源分離処理中...", None, 0, 0, self)
+        # self.progress_dialog.setCancelButtonText(None)
+        # self.progress_dialog.setModal(True)
+        # self.progress_dialog.show()
 
         self.separation_thread = SeparationThread(input_path)
         self.separation_thread.finished_signal.connect(self.on_separation_finished)
@@ -303,7 +303,7 @@ class MainWindow(QMainWindow):
         self.separation_thread.start()
 
     def on_separation_finished(self, separated_paths):
-        self.progress_dialog.close()
+        # self.progress_dialog.close()
         self.separated_song_paths = separated_paths
 
         # 分離が完了したら、伴奏ファイルのパスを保存
@@ -327,7 +327,7 @@ class MainWindow(QMainWindow):
             )
 
         # ここにおけばOK押す前に次の処理が開始されると予想
-        QMessageBox.information(self, "完了", "音源分離が完了しました。")
+        # QMessageBox.information(self, "完了", "音源分離が完了しました。")
 
     def on_separation_error(self, error_message):
         self.progress_dialog.close()
