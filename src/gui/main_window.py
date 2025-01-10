@@ -143,7 +143,7 @@ class MainWindow(QMainWindow):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_pitch_bar)
         self.timer.timeout.connect(self.update_lyrics_display)  # 歌詞更新処理を追加
-        self.timer.setInterval(100)  # 例: 100msごとに更新
+        self.timer.setInterval(50)  # 更新頻度(ms)
 
         # 他の処理系モジュールの初期化
         self.audio_copy = Copy()
@@ -482,7 +482,7 @@ class MainWindow(QMainWindow):
         current_time = self.audio_player.get_current_time()
 
         for word_info in segment["words"]:
-            if segment["start"] <= current_time < segment["end"]:
+            if round(segment["start"], 2) <= current_time < round(segment["end"], 2):
                 ratio = (
                     (current_time - word_info["start"])
                     / (word_info["end"] - word_info["start"])

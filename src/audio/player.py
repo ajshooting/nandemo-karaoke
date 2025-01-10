@@ -46,6 +46,6 @@ class Player:
     def get_current_time(self):
         if self.is_playing():
             # 現在の時刻 - 再生開始時刻
-            return time.time() - self.start_time
+            return round(time.time() - self.start_time, 2)
         else:
             return 0.0
