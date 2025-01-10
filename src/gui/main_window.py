@@ -454,10 +454,7 @@ class MainWindow(QMainWindow):
                 if self.current_segment_index + 1 < len(self.recognized_lyrics)
                 else None
             )
-            if segment["start"] <= current_time < segment["end"]:
-                # 現在のフレーズを表示
-                self.display_karaoke_text(segment, next_segment)
-            elif current_time >= segment["end"]:
+            if current_time >= round(segment["end"], 2):
                 # 現在のフレーズの終了時間を過ぎたら、次のフレーズへ
                 self.current_segment_index += 1
                 self.lyrics_label.setText("")  # 次のフレーズ表示前にクリア
@@ -466,6 +463,9 @@ class MainWindow(QMainWindow):
                     self.display_karaoke_text(
                         self.recognized_lyrics[self.current_segment_index], next_segment
                     )
+            elif round(segment["start"], 2) <= current_time:
+                # 現在のフレーズを表示
+                self.display_karaoke_text(segment, next_segment)
             else:
                 # まだフレーズの開始時間になっていない
                 self.display_karaoke_text(segment, next_segment)
