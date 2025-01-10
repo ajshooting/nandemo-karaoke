@@ -330,7 +330,7 @@ class MainWindow(QMainWindow):
         # QMessageBox.information(self, "完了", "音源分離が完了しました。")
 
     def on_separation_error(self, error_message):
-        self.progress_dialog.close()
+        # self.progress_dialog.close()
         QMessageBox.critical(
             self, "エラー", f"音源分離中にエラーが発生しました: {error_message}"
         )
