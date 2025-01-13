@@ -66,6 +66,13 @@
                             </widget>
                         </item>
                         <item>
+                            <widget class="QPushButton" name="pauseButton">
+                                <property name="text">
+                                    <string>一時停止</string>
+                                </property>
+                            </widget>
+                        </item>
+                        <item>
                             <widget class="QPushButton" name="stopButton">
                                 <property name="text">
                                     <string>停止</string>
