@@ -54,14 +54,7 @@
                         <item>
                             <widget class="QPushButton" name="playButton">
                                 <property name="text">
-                                    <string>カラオケ再生</string>
-                                </property>
-                            </widget>
-                        </item>
-                        <item>
-                            <widget class="QPushButton" name="playRawButton">
-                                <property name="text">
-                                    <string>原曲再生</string>
+                                    <string>再生</string>
                                 </property>
                             </widget>
                         </item>
@@ -76,6 +69,56 @@
                             <widget class="QPushButton" name="stopButton">
                                 <property name="text">
                                     <string>停止</string>
+                                </property>
+                            </widget>
+                        </item>
+                    </layout>
+                </item>
+                <item>
+                    <layout class="QHBoxLayout" name="volumeLayout">
+                        <item>
+                            <widget class="QLabel" name="rawVolumeLabel">
+                                <property name="text">
+                                    <string>原曲音量</string>
+                                </property>
+                            </widget>
+                        </item>
+                        <item>
+                            <widget class="QSlider" name="rawVolumeSlider">
+                                <property name="orientation">
+                                    <enum>Qt::Horizontal</enum>
+                                </property>
+                                <property name="minimum">
+                                    <number>0</number>
+                                </property>
+                                <property name="maximum">
+                                    <number>100</number>
+                                </property>
+                                <property name="value">
+                                    <number>50</number>
+                                </property>
+                            </widget>
+                        </item>
+                        <item>
+                            <widget class="QLabel" name="accompanimentVolumeLabel">
+                                <property name="text">
+                                    <string>カラオケ音量</string>
+                                </property>
+                            </widget>
+                        </item>
+                        <item>
+                            <widget class="QSlider" name="accompanimentVolumeSlider">
+                                <property name="orientation">
+                                    <enum>Qt::Horizontal</enum>
+                                </property>
+                                <property name="minimum">
+                                    <number>0</number>
+                                </property>
+                                <property name="maximum">
+                                    <number>100</number>
+                                </property>
+                                <property name="value">
+                                    <number>50</number>
                                 </property>
                             </widget>
                         </item>
