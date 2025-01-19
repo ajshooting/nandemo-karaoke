@@ -361,21 +361,28 @@ class MainWindow(QMainWindow):
             )
             return
 
-        # 原曲とカラオケ音源を同時に再生開始
-        self.audio_player.play(self.music_path, self.accompaniment_path)
+        # 一時停止中かどうかの判定
+        if self.audio_player.pause_time:
+            # 一時停止中からの再開
+            self.audio_player.resume()
+        else:
+            # 新規再生
+            self.audio_player.play(self.music_path, self.accompaniment_path)
 
-        self.lyrics_label.setText("")
-        self.pitch_bar_widget.reset()
+            self.lyrics_label.setText("")
+            self.pitch_bar_widget.reset()
+
+            self.current_lyric_index = 0
+            self.current_word_index = 0
+            self.update_lyrics_display()
 
         self.timer.start()
-        self.current_lyric_index = 0
-        self.current_word_index = 0
-        self.update_lyrics_display()
 
     @pyqtSlot()
     def on_pause_clicked(self):
         print("一時停止")
         self.audio_player.pause()
+        self.timer.stop()
 
     @pyqtSlot()
     def on_stop_clicked(self):

@@ -107,6 +107,14 @@ class Player:
                 elapsed_time:
             ]
 
+            # 音量を適用
+            remaining_segment_raw = remaining_segment_raw + (
+                10 * (self.raw_volume - 0.5)
+            )
+            remaining_segment_accompaniment = remaining_segment_accompaniment + (
+                10 * (self.accompaniment_volume - 0.5)
+            )
+
             # WAV形式に変換し、BytesIOオブジェクトとして出力する
             wav_io_raw = io.BytesIO()
             remaining_segment_raw.export(wav_io_raw, format="wav")
