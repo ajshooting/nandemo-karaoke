@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QApplication,
     QProgressDialog,
+    QSlider,
 )
 from PyQt6.QtCore import pyqtSlot, QTimer, Qt, QThread, pyqtSignal
 from PyQt6.uic import loadUi
@@ -111,13 +112,17 @@ class MainWindow(QMainWindow):
         # ウィジェットの取得 (.uiのobjectName)
         self.lyrics_label = self.findChild(QLabel, "lyricsLabel")
         self.pitch_bar_widget = self.findChild(PitchBar, "pitchBarWidget")
-        self.play_raw_button = self.findChild(QPushButton, "playRawButton")
         self.play_button = self.findChild(QPushButton, "playButton")
+        self.pause_button = self.findChild(QPushButton, "pauseButton")
         self.stop_button = self.findChild(QPushButton, "stopButton")
         self.search_button = self.findChild(QPushButton, "searchButton")
         self.download_input = self.findChild(QLineEdit, "downloadInput")
         self.download_button = self.findChild(QPushButton, "downloadButton")
         self.score_label = self.findChild(QLabel, "scoreLabel")
+        self.raw_volume_slider = self.findChild(QSlider, "rawVolumeSlider")
+        self.accompaniment_volume_slider = self.findChild(
+            QSlider, "accompanimentVolumeSlider"
+        )
 
         # ドロップ/選択エリアの作成
         self.drop_area = QLabel("ここに音源ファイルをドロップしてください", self)
@@ -128,12 +133,18 @@ class MainWindow(QMainWindow):
         self.findChild(QVBoxLayout, "verticalLayout").insertWidget(0, self.drop_area)
 
         # ボタンのシグナルとスロットを接続
-        self.play_raw_button.clicked.connect(self.on_play_raw_clicked)
         self.play_button.clicked.connect(self.on_play_clicked)
+        self.pause_button.clicked.connect(self.on_pause_clicked)
         self.stop_button.clicked.connect(self.on_stop_clicked)
         self.search_button.clicked.connect(self.on_search_clicked)
         self.drop_area.mousePressEvent = self.on_drop_area_clicked  # クリックイベント
         self.download_button.clicked.connect(self.on_download_clicked)
+
+        # スライダーのシグナルとスロットを接続
+        self.raw_volume_slider.valueChanged.connect(self.on_raw_volume_changed)
+        self.accompaniment_volume_slider.valueChanged.connect(
+            self.on_accompaniment_volume_changed
+        )
 
         # ドロップイベントのオーバーライド
         self.drop_area.dragEnterEvent = self.dragEnterEvent
@@ -337,73 +348,41 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot()
     def on_play_clicked(self):
-        if not self.current_song_path:
-            QMessageBox.warning(self, "警告", "音源ファイルが選択されていません。")
-            return
-
-        if not self.recognized_lyrics:
-            QMessageBox.warning(self, "警告", "音声認識が完了していません。")
-            return
-
-        if not self.pitch_data:
-            QMessageBox.warning(self, "警告", "ピッチ解析が完了していません。")
-            return
-
-        if self.accompaniment_path:
-            print(f"カラオケ再生: {self.accompaniment_path}")
-            self.audio_player.play(self.accompaniment_path)
-        else:
+        if (
+            not self.current_song_path
+            or not self.accompaniment_path
+            or not self.recognized_lyrics
+            or not self.pitch_data
+        ):
             QMessageBox.warning(
                 self,
                 "警告",
-                "音源ファイルが選択されていません。先に音源ファイルをドロップまたは選択してください。",
+                "音源ファイル、音声認識結果、またはピッチ解析結果が不足しています。",
             )
             return
 
-        self.lyrics_label.setText("")
-        self.pitch_bar_widget.reset()
+        # 一時停止中かどうかの判定
+        if self.audio_player.pause_time:
+            # 一時停止中からの再開
+            self.audio_player.resume()
+        else:
+            # 新規再生
+            self.audio_player.play(self.music_path, self.accompaniment_path)
+
+            self.lyrics_label.setText("")
+            self.pitch_bar_widget.reset()
+
+            self.current_lyric_index = 0
+            self.current_word_index = 0
+            self.update_lyrics_display()
 
         self.timer.start()
-        self.current_lyric_index = 0  # 再生開始時にインデックスをリセット
-
-        self.current_word_index = 0
-        self.update_lyrics_display()  # 初期表示のため呼び出す
 
     @pyqtSlot()
-    def on_play_raw_clicked(self):
-        if not self.current_song_path:
-            QMessageBox.warning(self, "警告", "音源ファイルが選択されていません。")
-            return
-
-        if not self.recognized_lyrics:
-            QMessageBox.warning(self, "警告", "音声認識が完了していません。")
-            return
-
-        if not self.pitch_data:
-            QMessageBox.warning(self, "警告", "ピッチ解析が完了していません。")
-            return
-
-        if self.music_path:
-            print(f"原曲再生: {self.music_path}")
-            self.audio_player.play(self.music_path)
-        else:
-            QMessageBox.warning(
-                self,
-                "警告",
-                "音源ファイルが選択されていません。先に音源ファイルをドロップまたは選択してください。",
-            )
-            return
-
-        # それぞれの再生時に停止時と同じ処理をするべきなのかも..?
-
-        self.lyrics_label.setText("")
-        self.pitch_bar_widget.reset()
-
-        self.timer.start()
-        self.current_lyric_index = 0  # 再生開始時にインデックスをリセット
-
-        self.current_word_index = 0
-        self.update_lyrics_display()  # 初期表示のため呼び出す
+    def on_pause_clicked(self):
+        print("一時停止")
+        self.audio_player.pause()
+        self.timer.stop()
 
     @pyqtSlot()
     def on_stop_clicked(self):
@@ -431,7 +410,14 @@ class MainWindow(QMainWindow):
             current_time = self.audio_player.get_current_time()
             self.pitch_bar_widget.update_position(current_time)
 
-    # ! これ使われてなくない？
+    def on_raw_volume_changed(self, value):
+        volume = value / 100.0
+        self.audio_player.set_raw_volume(volume)
+
+    def on_accompaniment_volume_changed(self, value):
+        volume = value / 100.0
+        self.audio_player.set_accompaniment_volume(volume)
+
     def set_lyrics(self, lyrics):
         self.lyrics = lyrics
         # 歌詞をQLabelに表示する処理 (例: 最初の歌詞を表示)
