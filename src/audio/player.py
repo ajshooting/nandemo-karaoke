@@ -154,34 +154,67 @@ class Player:
 
     def set_raw_volume(self, volume):
         self.raw_volume = volume
-        if self.audio_segment_raw:
-            # 音量を変更した新しいAudioSegmentを作成
-            adjusted_audio_segment_raw = self.audio_segment_raw + (
+        if (
+            self.audio_segment_raw
+            and self.play_obj_raw
+            and self.play_obj_raw.is_playing()
+        ):
+            current_time_ms = int(
+                self.get_current_time() * 1000
+            )  # 現在の再生位置を取得（ミリ秒）
+
+            # 現在の再生位置から最後までのAudioSegmentを切り出し
+            remaining_segment_raw = self.audio_segment_raw[current_time_ms:]
+
+            # 切り出したAudioSegmentに対して音量を適用
+            adjusted_remaining_segment_raw = remaining_segment_raw + (
                 10 * (self.raw_volume - 0.5)
             )
+
             # WAV形式に変換し、BytesIOオブジェクトとして出力
             wav_io = io.BytesIO()
-            adjusted_audio_segment_raw.export(wav_io, format="wav")
+            adjusted_remaining_segment_raw.export(wav_io, format="wav")
             wav_io.seek(0)
+
             # 新しいWaveObjectを作成し、再生中のオブジェクトを置き換える
-            if self.play_obj_raw and self.play_obj_raw.is_playing():
-                self.play_obj_raw.stop()
-                wave_obj_raw = sa.WaveObject.from_wave_file(wav_io)
-                self.play_obj_raw = wave_obj_raw.play()
+            self.play_obj_raw.stop()
+            wave_obj_raw = sa.WaveObject.from_wave_file(wav_io)
+            self.play_obj_raw = wave_obj_raw.play()
+
+            # 再生開始時間を調整
+            self.start_time = time.time() - self.get_current_time()
 
     def set_accompaniment_volume(self, volume):
         self.accompaniment_volume = volume
-        if self.audio_segment_accompaniment:
-            # 音量を変更した新しいAudioSegmentを作成
-            adjusted_audio_segment_accompaniment = self.audio_segment_accompaniment + (
-                10 * (self.accompaniment_volume - 0.5)
+        if (
+            self.audio_segment_accompaniment
+            and self.play_obj_accompaniment
+            and self.play_obj_accompaniment.is_playing()
+        ):
+            current_time_ms = int(
+                self.get_current_time() * 1000
+            )  # 現在の再生位置を取得（ミリ秒）
+
+            # 現在の再生位置から最後までのAudioSegmentを切り出し
+            remaining_segment_accompaniment = self.audio_segment_accompaniment[
+                current_time_ms:
+            ]
+
+            # 切り出したAudioSegmentに対して音量を適用
+            adjusted_remaining_segment_accompaniment = (
+                remaining_segment_accompaniment
+                + (10 * (self.accompaniment_volume - 0.5))
             )
+
             # WAV形式に変換し、BytesIOオブジェクトとして出力
             wav_io = io.BytesIO()
-            adjusted_audio_segment_accompaniment.export(wav_io, format="wav")
+            adjusted_remaining_segment_accompaniment.export(wav_io, format="wav")
             wav_io.seek(0)
+
             # 新しいWaveObjectを作成し、再生中のオブジェクトを置き換える
-            if self.play_obj_accompaniment and self.play_obj_accompaniment.is_playing():
-                self.play_obj_accompaniment.stop()
-                wave_obj_accompaniment = sa.WaveObject.from_wave_file(wav_io)
-                self.play_obj_accompaniment = wave_obj_accompaniment.play()
+            self.play_obj_accompaniment.stop()
+            wave_obj_accompaniment = sa.WaveObject.from_wave_file(wav_io)
+            self.play_obj_accompaniment = wave_obj_accompaniment.play()
+
+            # 再生開始時間を調整
+            self.start_time = time.time() - self.get_current_time()
