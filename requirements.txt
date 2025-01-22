@@ -36,7 +36,7 @@ hyperframe==6.0.1
 idna==3.10
 Jinja2==3.1.5
 joblib==1.4.2
-keras==3.8.0
+keras==2.9.0
 Keras-Preprocessing==1.1.2
 lazy_loader==0.4
 libclang==18.1.1
