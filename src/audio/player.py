@@ -3,6 +3,7 @@ import time
 from pydub import AudioSegment
 import io
 
+# 滑らかにしたいから変更後の更新にしようね
 
 class Player:
     def __init__(self):
