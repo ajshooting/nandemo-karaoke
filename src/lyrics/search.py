@@ -2,6 +2,7 @@ import webbrowser
 import urllib.parse
 import os
 
+
 class Search:
     def __init__(self, browser=None):
         # Noneだとデフォルト
@@ -28,7 +29,7 @@ class Search:
                 self.browser_controller.open_new_tab(search_url)
             else:
                 webbrowser.open_new_tab(search_url)
-                
+
             print(f"google検索: {query}")
 
         except Exception as e:
