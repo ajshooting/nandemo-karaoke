@@ -111,20 +111,18 @@ class PitchExtractor:
             # 音程が同じうちは伸ばす処理
             filtered_pitch_data2 = []
             if filtered_pitch_data:
-                current_note = filtered_pitch_data[0]
-                for i in range(1, len(filtered_pitch_data)):
-                    if (
-                        filtered_pitch_data[i]["pitch"] == current_note["pitch"]
-                        and rms[
-                            np.argmin(np.abs(times - filtered_pitch_data[i]["start"]))
-                        ]
-                        > self.volume_threshold
-                    ):
-                        current_note["end"] = filtered_pitch_data[i]["end"]
-                    else:
-                        filtered_pitch_data2.append(current_note)
-                        current_note = filtered_pitch_data[i]
-                filtered_pitch_data2.append(current_note)
+                for i in range(1, len(filtered_pitch_data) - 1):
+                    distance = (
+                        filtered_pitch_data[i + 1]["pitch"]
+                        - filtered_pitch_data[i]["pitch"]
+                    )
+                    distance += (
+                        filtered_pitch_data[i - 1]["pitch"]
+                        - filtered_pitch_data[i]["pitch"]
+                    )
+                    if abs(distance) > 28:
+                        pass
+                    filtered_pitch_data2.append(filtered_pitch_data[i])
 
             # 結果をキャッシュに保存
             try:
