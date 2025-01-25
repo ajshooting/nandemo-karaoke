@@ -35,7 +35,6 @@ from src.audio.player import Player
 from src.audio.recorder import Recorder
 from src.audio.separator import Separator
 from src.pitch.extractor import PitchExtractor
-from src.lyrics.synchronizer import Synchronizer
 from src.lyrics.recognizer import Recognizer
 from src.lyrics.search import Search
 
@@ -214,7 +213,6 @@ class MainWindow(QMainWindow):
         self.audio_player = Player()
         self.audio_recorder = Recorder()
         self.pitch_extractor = PitchExtractor()
-        self.lyric_synchronizer = Synchronizer()
         self.lyric_search = Search()
         self.recognizer = Recognizer()
         self.recognition_thread = None
