@@ -21,6 +21,6 @@ pip freeze > requirements.txt
 
 - [x] 楽曲分離 -> spleeter
 - [x] メロディ/ピッチ検出 -> YIN
-- [ ] 歌詞認識/検索/同期 -> whisper/検索は権利的に△?
+- [x] 歌詞認識/検索/同期 -> whisper/検索は権利的に△?
 - [ ] 採点機能
 - [ ] exe/app化 -> pyinstallerがうまくいかない
