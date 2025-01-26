@@ -107,6 +107,10 @@ class PitchExtractor:
                         key=lambda x: rms[np.argmin(np.abs(times - x["start"]))],
                     )
                     filtered_pitch_data.append(loudest_pitch)
+            
+            # ここでオクターブ系の処理をしたい
+            # 前後一定期間を見た時に、オクターブ(もしくはハモリ)で並行してそうなのを検知したら、片方に移動させる
+            # オクターブを行き来する音程の場合特別したい。。
 
             # 局所的な外れ値を削除する
             filtered_pitch_data2 = []
