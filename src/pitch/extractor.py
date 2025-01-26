@@ -120,9 +120,10 @@ class PitchExtractor:
                         filtered_pitch_data[i - 1]["pitch"]
                         - filtered_pitch_data[i]["pitch"]
                     )
-                    if abs(distance) > 28:
+                    if abs(distance) > 20:
                         pass
-                    filtered_pitch_data2.append(filtered_pitch_data[i])
+                    else:
+                        filtered_pitch_data2.append(filtered_pitch_data[i])
 
             # 結果をキャッシュに保存
             try:
