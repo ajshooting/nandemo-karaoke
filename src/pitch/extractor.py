@@ -108,7 +108,7 @@ class PitchExtractor:
                     )
                     filtered_pitch_data.append(loudest_pitch)
 
-            # 音程が同じうちは伸ばす処理
+            # 局所的な外れ値を削除する
             filtered_pitch_data2 = []
             if filtered_pitch_data:
                 for i in range(1, len(filtered_pitch_data) - 1):
