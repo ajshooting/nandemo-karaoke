@@ -1,20 +1,17 @@
 from PyQt6.QtWidgets import (
     QMainWindow,
     QVBoxLayout,
-    QHBoxLayout,
     QLabel,
     QPushButton,
     QLineEdit,
-    QWidget,
     QFileDialog,
     QMessageBox,
     QApplication,
-    QProgressDialog,
     QSlider,
 )
 from PyQt6.QtCore import pyqtSlot, QTimer, Qt, QThread, pyqtSignal
 from PyQt6.uic import loadUi
-from PyQt6.QtGui import QPixmap, QDragEnterEvent, QDropEvent
+from PyQt6.QtGui import QDragEnterEvent, QDropEvent
 
 # カスタムウィジェットをインポート
 from src.gui.widgets.pitch_bar import PitchBar
