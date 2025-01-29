@@ -20,7 +20,7 @@ class Downloader:
             results = YoutubeSearch(query, max_results=1).to_dict()
 
             if not results:
-                print(f"youtube上で見つかりませんでした: {query}")
+                print(f"youtubeで見つかりませんでした: {query}")
                 return
 
             video_url = "https://youtube.com" + results[0]["url_suffix"]
