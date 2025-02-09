@@ -115,10 +115,8 @@ class MainWindow(QMainWindow):
         self.download_input = self.findChild(QLineEdit, "downloadInput")
         self.download_button = self.findChild(QPushButton, "downloadButton")
         self.score_label = self.findChild(QLabel, "scoreLabel")
-        self.raw_volume_slider = self.findChild(QSlider, "rawVolumeSlider")
-        self.accompaniment_volume_slider = self.findChild(
-            QSlider, "accompanimentVolumeSlider"
-        )
+        self.total_volume_slider = self.findChild(QSlider, "totalVolumeSlider")
+        self.vocal_ratio_slider = self.findChild(QSlider, "vocalRatioSlider")
 
         # ドロップ/選択エリアの作成
         self.drop_area = QLabel("ここに音源ファイルをドロップしてください", self)
@@ -137,10 +135,8 @@ class MainWindow(QMainWindow):
         self.download_button.clicked.connect(self.on_download_clicked)
 
         # スライダーのシグナルとスロットを接続
-        self.raw_volume_slider.valueChanged.connect(self.on_raw_volume_changed)
-        self.accompaniment_volume_slider.valueChanged.connect(
-            self.on_accompaniment_volume_changed
-        )
+        self.total_volume_slider.valueChanged.connect(self.on_total_volume_changed)
+        self.vocal_ratio_slider.valueChanged.connect(self.on_vocal_ratio_changed)
 
         # ドロップイベントのオーバーライド
         self.drop_area.dragEnterEvent = self.dragEnterEvent
@@ -405,13 +401,21 @@ class MainWindow(QMainWindow):
             current_time = self.audio_player.get_current_time()
             self.pitch_bar_widget.update_position(current_time)
 
-    def on_raw_volume_changed(self, value):
-        volume = value / 100.0
-        self.audio_player.set_raw_volume(volume)
+    def on_total_volume_changed(self, value):
+        self.update_volumes()
 
-    def on_accompaniment_volume_changed(self, value):
-        volume = value / 100.0
-        self.audio_player.set_accompaniment_volume(volume)
+    def on_vocal_ratio_changed(self, value):
+        self.update_volumes()
+
+    def update_volumes(self):
+        total_volume = self.total_volume_slider.value() / 100.0
+        vocal_ratio = self.vocal_ratio_slider.value() / 100.0
+
+        vocal_volume = total_volume * vocal_ratio
+        accompaniment_volume = total_volume * (1 - vocal_ratio)
+
+        self.audio_player.set_raw_volume(vocal_volume)
+        self.audio_player.set_accompaniment_volume(accompaniment_volume)
 
     def set_lyrics(self, lyrics):
         self.lyrics = lyrics

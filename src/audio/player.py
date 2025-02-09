@@ -153,37 +153,13 @@ class Player:
             return 0.0
 
     def set_raw_volume(self, volume):
-        if (
-            self.audio_segment_raw
-            and self.play_obj_raw
-            and self.play_obj_raw.is_playing()
-        ):
-            # 現在の再生位置を取得
-            current_time = self.get_current_time()
-
-            # 一時停止
+        self.raw_volume = volume
+        if self.is_playing():
             self.pause()
-
-            # 音量を更新
-            self.raw_volume = volume
-
-            # 一時停止した位置から再生を再開
             self.resume()
 
     def set_accompaniment_volume(self, volume):
-        if (
-            self.audio_segment_accompaniment
-            and self.play_obj_accompaniment
-            and self.play_obj_accompaniment.is_playing()
-        ):
-            # 現在の再生位置を取得
-            current_time = self.get_current_time()
-
-            # 一時停止
+        self.accompaniment_volume = volume
+        if self.is_playing():
             self.pause()
-
-            # 音量を更新
-            self.accompaniment_volume = volume
-
-            # 一時停止した位置から再生を再開
             self.resume()
