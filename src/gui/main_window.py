@@ -178,6 +178,9 @@ class MainWindow(QMainWindow):
 
         self.lyrics_label = self.findChild(QLabel, "lyricsLabel")
         self.lyrics_label.setTextFormat(Qt.TextFormat.RichText)  # リッチテキストを有効
+        self.lyrics_label.setWordWrap(
+            True
+        )  # 長い歌詞がウィンドウの幅を超えないようにする
 
         # 各種スレッドを保持する変数を初期化
         self.download_thread = None
