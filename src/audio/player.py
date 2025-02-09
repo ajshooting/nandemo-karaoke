@@ -38,9 +38,9 @@ class Player:
             )
 
             # 音量を適用
-            sound_raw = sound_raw + (10 * (self.raw_volume - 0.5))
+            sound_raw = sound_raw + (20 * (self.raw_volume - 1))
             sound_accompaniment = sound_accompaniment + (
-                10 * (self.accompaniment_volume - 0.5)
+                20 * (self.accompaniment_volume - 0.5)
             )
 
             # WAV形式に変換し、BytesIOオブジェクトとして出力する
@@ -108,11 +108,9 @@ class Player:
             ]
 
             # 音量を適用
-            remaining_segment_raw = remaining_segment_raw + (
-                10 * (self.raw_volume - 0.5)
-            )
+            remaining_segment_raw = remaining_segment_raw + (20 * (self.raw_volume - 1))
             remaining_segment_accompaniment = remaining_segment_accompaniment + (
-                10 * (self.accompaniment_volume - 0.5)
+                20 * (self.accompaniment_volume - 0.5)
             )
 
             # WAV形式に変換し、BytesIOオブジェクトとして出力する
