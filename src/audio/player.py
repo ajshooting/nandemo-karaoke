@@ -39,9 +39,7 @@ class Player:
 
             # 音量を適用
             sound_raw = sound_raw + (20 * (self.raw_volume - 1))
-            sound_accompaniment = sound_accompaniment + (
-                20 * (self.accompaniment_volume - 0.5)
-            )
+            sound_accompaniment = sound_accompaniment + (20 * (self.accompaniment_volume - 1))
 
             # WAV形式に変換し、BytesIOオブジェクトとして出力する
             wav_io_raw = io.BytesIO()
@@ -110,7 +108,7 @@ class Player:
             # 音量を適用
             remaining_segment_raw = remaining_segment_raw + (20 * (self.raw_volume - 1))
             remaining_segment_accompaniment = remaining_segment_accompaniment + (
-                20 * (self.accompaniment_volume - 0.5)
+                20 * (self.accompaniment_volume - 1)
             )
 
             # WAV形式に変換し、BytesIOオブジェクトとして出力する
@@ -158,6 +156,13 @@ class Player:
 
     def set_accompaniment_volume(self, volume):
         self.accompaniment_volume = volume
+        if self.is_playing():
+            self.pause()
+            self.resume()
+
+    def update_volumes(self, total_volume, vocal_ratio):
+        self.raw_volume = total_volume * vocal_ratio
+        self.accompaniment_volume = total_volume * (1 - vocal_ratio)
         if self.is_playing():
             self.pause()
             self.resume()

@@ -413,12 +413,7 @@ class MainWindow(QMainWindow):
     def update_volumes(self):
         total_volume = self.total_volume_slider.value() / 100.0
         vocal_ratio = self.vocal_ratio_slider.value() / 100.0
-
-        vocal_volume = total_volume * vocal_ratio
-        accompaniment_volume = total_volume * (1 - vocal_ratio)
-
-        self.audio_player.set_raw_volume(vocal_volume)
-        self.audio_player.set_accompaniment_volume(accompaniment_volume)
+        self.audio_player.update_volumes(total_volume, vocal_ratio)
 
     def set_lyrics(self, lyrics):
         self.lyrics = lyrics
