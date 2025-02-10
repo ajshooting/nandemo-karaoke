@@ -166,6 +166,7 @@ class MainWindow(QMainWindow):
         self.pitch_data = []  # 音程データ
         self.music_path = None  # 音源ファイルのpath
         self.accompaniment_path = None  # 分離後の伴奏ファイルのパスを保存する変数
+        self.vocals_path = None  # 分離後のボーカルファイルのパスを保存する変数
         self.recognized_lyrics = []  # 音声認識された歌詞を保存するリスト
         self.current_lyric_index = 0  # 現在表示中の歌詞のインデックス
 
@@ -314,6 +315,7 @@ class MainWindow(QMainWindow):
         # 分離が完了したら、伴奏ファイルのパスを保存
         self.accompaniment_path = self.separated_song_paths.get("accompaniment")
         vocals_path = self.separated_song_paths.get("vocals")
+        self.vocals_path = vocals_path  # ボーカルファイルのパスを保存
 
         # vocalに音声認識をする予定だったが、音源そのままを認識させた方が精度が高かった..
         # if vocals_path:
@@ -345,6 +347,7 @@ class MainWindow(QMainWindow):
         if (
             not self.current_song_path
             or not self.accompaniment_path
+            or not self.vocals_path
             or not self.recognized_lyrics
             or not self.pitch_data
         ):
@@ -361,7 +364,7 @@ class MainWindow(QMainWindow):
             self.audio_player.resume()
         else:
             # 新規再生
-            self.audio_player.play(self.music_path, self.accompaniment_path)
+            self.audio_player.play(self.vocals_path, self.accompaniment_path)
 
             self.lyrics_label.setText("")
             self.pitch_bar_widget.reset()
