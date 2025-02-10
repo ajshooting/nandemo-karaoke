@@ -2,6 +2,13 @@ import simpleaudio as sa
 import time
 from pydub import AudioSegment
 import io
+import math
+
+
+def volume_to_db(volume):
+    if volume <= 0:
+        return -float("inf")  # 0以下の場合、無限小デシベル
+    return 20 * math.log10(volume)
 
 
 class Player:
@@ -38,10 +45,19 @@ class Player:
             )
 
             # 音量を適用
-            sound_vocals = sound_vocals + (20 * (self.vocals_volume - 1))
-            sound_accompaniment = sound_accompaniment + (
-                20 * (self.accompaniment_volume - 1)
-            )
+            if self.vocals_volume <= 0:  # 0以下の場合無音にする
+                sound_vocals = AudioSegment.silent(duration=len(sound_vocals))
+            else:
+                db_vocals = volume_to_db(self.vocals_volume)
+                sound_vocals = sound_vocals.apply_gain(db_vocals)
+
+            if self.accompaniment_volume <= 0:  # 0以下の場合無音にする
+                sound_accompaniment = AudioSegment.silent(
+                    duration=len(sound_accompaniment)
+                )
+            else:
+                db_accompaniment = volume_to_db(self.accompaniment_volume)
+                sound_accompaniment = sound_accompaniment.apply_gain(db_accompaniment)
 
             # WAV形式に変換し、BytesIOオブジェクトとして出力する
             wav_io_vocals = io.BytesIO()
@@ -108,12 +124,25 @@ class Player:
             ]
 
             # 音量を適用
-            remaining_segment_vocals = remaining_segment_vocals + (
-                20 * (self.vocals_volume - 1)
-            )
-            remaining_segment_accompaniment = remaining_segment_accompaniment + (
-                20 * (self.accompaniment_volume - 1)
-            )
+            if self.vocals_volume <= 0:  # 0以下の場合無音にする
+                remaining_segment_vocals = AudioSegment.silent(
+                    duration=len(remaining_segment_vocals)
+                )
+            else:
+                db_vocals = volume_to_db(self.vocals_volume)
+                remaining_segment_vocals = remaining_segment_vocals.apply_gain(
+                    db_vocals
+                )
+
+            if self.accompaniment_volume <= 0:  # 0以下の場合無音にする
+                remaining_segment_accompaniment = AudioSegment.silent(
+                    duration=len(remaining_segment_accompaniment)
+                )
+            else:
+                db_accompaniment = volume_to_db(self.accompaniment_volume)
+                remaining_segment_accompaniment = (
+                    remaining_segment_accompaniment.apply_gain(db_accompaniment)
+                )
 
             # WAV形式に変換し、BytesIOオブジェクトとして出力する
             wav_io_vocals = io.BytesIO()
@@ -166,7 +195,7 @@ class Player:
 
     def update_volumes(self, total_volume, vocal_ratio):
         self.vocals_volume = total_volume * vocal_ratio
-        self.accompaniment_volume = total_volume * (1 - vocal_ratio)
+        self.accompaniment_volume = total_volume
         if self.is_playing():
             self.pause()
             self.resume()
